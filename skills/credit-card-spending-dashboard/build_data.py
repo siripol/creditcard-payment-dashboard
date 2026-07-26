@@ -262,24 +262,34 @@ def parse_card_b(path):
 
 # ------------------------------------------------------------------ main build
 def build():
-    if not os.path.isdir(SOURCE_DIR):
-        print(f"ERROR: ไม่พบโฟลเดอร์ statements ที่ {SOURCE_DIR}")
-        print("สร้างโฟลเดอร์นี้แล้ววางไฟล์ statement PDF ไว้ข้างใน จากนั้นรันใหม่")
-        sys.exit(1)
-    files = sorted(glob.glob(os.path.join(SOURCE_DIR, '*.pdf')))
-    if not files:
-        print(f"ERROR: ไม่พบไฟล์ PDF ใน {SOURCE_DIR}")
-        sys.exit(1)
-    # convert to txt next to this script (pdftotext -layout)
+    # statements/ may be absent when rebuilding from the .txt_cache archive (PDFs removed);
+    # glob on a missing dir just returns [] and the .txt_cache fallback below handles it.
+    files = sorted(glob.glob(os.path.join(SOURCE_DIR, '*.pdf'))) if os.path.isdir(SOURCE_DIR) else []
+    cache = os.path.join(_HERE, '.txt_cache')
+    os.makedirs(cache, exist_ok=True)
+    # Resolve the extracted-text files to build from.
+    if files:
+        # PDFs present: convert each to cached text (skip if already cached).
+        txts = []
+        for f in files:
+            base = re.sub(r'\.pdf$', '', os.path.basename(f))
+            txt = os.path.join(cache, base + '.txt')
+            if not os.path.exists(txt):
+                os.system(f'pdftotext -layout "{f}" "{txt}" 2>/dev/null')
+            txts.append(txt)
+    else:
+        # No PDFs: fall back to the archived extracted text in .txt_cache -- the complete raw
+        # text of every statement -- so a rebuild still works after the source PDFs are removed.
+        txts = sorted(glob.glob(os.path.join(cache, '*.txt')))
+        if not txts:
+            print(f"ERROR: ไม่พบไฟล์ PDF ใน {SOURCE_DIR} และไม่มีข้อความสำรองใน {cache}")
+            print("วางไฟล์ statement PDF ไว้ใน statements/ แล้วรันใหม่")
+            sys.exit(1)
+        print(f"ไม่พบ PDF — ใช้ข้อความสำรองจาก .txt_cache ({len(txts)} ไฟล์)")
+    built_from = [os.path.basename(t) for t in txts]
+    # parse each extracted-text file
     rows = []
-    src_seen = {}
-    for f in files:
-        base = re.sub(r'\.pdf$', '', os.path.basename(f))
-        cache = os.path.join(_HERE, '.txt_cache')
-        os.makedirs(cache, exist_ok=True)
-        txt = os.path.join(cache, base + '.txt')
-        if not os.path.exists(txt):
-            os.system(f'pdftotext -layout "{f}" "{txt}" 2>/dev/null')
+    for txt in txts:
         recs = parse_card_a(txt) or parse_card_b(txt)  # adapt routing to your files
         key = card_key(open(txt, encoding='utf-8', errors='ignore').read())
         for r in recs:
@@ -352,8 +362,8 @@ def build():
                    cards=cards, cardMeta=cardMeta, reduceGroups=reduce_groups,
                    mth=mth, months=months,
                    meta=dict(raw=raw_n, dupRemoved=dup_removed, pairsRemoved=pairs,
-                             expenses=len(tx), files=len(files),
-                             builtFrom=[os.path.basename(f) for f in files]))
+                             expenses=len(tx), files=len(built_from),
+                             builtFrom=built_from))
     with open(OUT_JS, 'w', encoding='utf-8') as fh:
         fh.write("window.CCDATA = " + json.dumps(payload, ensure_ascii=False) + ";\n")
 
@@ -361,7 +371,7 @@ def build():
     write_monthly_brief(payload)
     write_single_html(payload)
 
-    print(f"files={len(files)}  raw_lines={raw_n}  duplicates_removed={dup_removed}  "
+    print(f"files={len(built_from)}  raw_lines={raw_n}  duplicates_removed={dup_removed}  "
           f"reversal_pairs={pairs}  final_expenses={len(tx)}")
     print(f"wrote {OUT_JS}  ({os.path.getsize(OUT_JS):,} bytes)")
 

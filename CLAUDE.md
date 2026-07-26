@@ -55,7 +55,7 @@ Pipeline in `build_data.py::build()`:
 
 ```
 statement PDFs
-  -> pdftotext -layout (cached in .txt_cache/)
+  -> pdftotext -layout (cached in .txt_cache/)   [no PDFs? build from .txt_cache directly]
   -> detect card = LAST 4 DIGITS (card_key) + statement month FROM TEXT CONTENT, not filename
   -> parse rows per layout (parse_card_a / parse_card_b — EXAMPLE parsers, adapt per bank)
   -> categorise (cat) + clean merchant name (merch) from the DESCRIPTION text
@@ -64,6 +64,13 @@ statement PDFs
   -> write spending_report.md + monthly_brief.md
   -> assemble dashboard.html (inline chart.umd.js + CCDATA + base64 fonts + recurring_rule.js)
 ```
+
+**`.txt_cache/` is the complete text archive.** `pdftotext -layout` output is cached per
+statement (full raw text, nothing dropped). `build()` uses it as a cache when PDFs are present,
+and **falls back to it as the source when `statements/` has no PDFs** — so the PDFs can be
+removed and rebuilds still work (re-parse, re-categorize, regenerate `data.js`/dashboard). It
+stays git-ignored (personal data). This is why no database is needed: the raw text is the
+durable store, and `data.js` is fully regenerable from it.
 
 **Template ↔ data separation (do not break):** `index.html` is a static template that loads
 data at runtime via `<script src="data.js">` (`window.CCDATA`). Never embed generated data
