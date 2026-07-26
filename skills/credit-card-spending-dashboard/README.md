@@ -70,7 +70,7 @@ assigned automatically from a palette.
 Monthly update (rebuild everything from newly-added PDFs):
 
 ```
-/updateCreditCardStatement
+/update-statement
 ```
 
 Set a card's cycle from chat instead of editing JSON:

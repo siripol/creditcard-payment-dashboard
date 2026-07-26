@@ -17,7 +17,7 @@ ships with **no personal data**.
 .
 ├── .claude-plugin/plugin.json          # plugin manifest
 ├── commands/                           # slash commands
-│   ├── updateCreditCardStatement.md    #   /updateCreditCardStatement
+│   ├── update-statement.md    #   /update-statement
 │   ├── set-expiryCard.md               #   /set-expiryCard <last5> <mmdd>
 │   └── set-recurringRule.md            #   /set-recurringRule <words>
 └── skills/credit-card-spending-dashboard/
@@ -32,7 +32,7 @@ ships with **no personal data**.
 
 ## Commands
 
-- **`/updateCreditCardStatement`** — attach the new statement PDF(s), then run this to rebuild
+- **`/update-statement`** — attach the new statement PDF(s), then run this to rebuild
   `data.js`, the reports, and the offline `dashboard.html`, with build stats and anomaly checks.
 - **`/set-expiryCard <last5> <mmdd>`** — set a card's cycle: `MM` = cycle anchor month, `DD` =
   statement closing day. Keyed by the card's last 5 digits. e.g. `/set-expiryCard 12345 1015`.
@@ -41,8 +41,26 @@ ships with **no personal data**.
 
 ## Install as a plugin
 
-This repo *is* the plugin. Install it in Cowork / Claude Code from its Git URL (via a plugin
-marketplace), or zip the repo into a `.plugin` bundle and open it in the Claude desktop app.
+This repo *is* the plugin (it carries both `.claude-plugin/plugin.json` and a
+`.claude-plugin/marketplace.json`). Works on every Claude Code surface — terminal CLI, VS Code
+/ JetBrains extensions, desktop app, and web.
+
+**From GitHub** — run in any Claude Code session:
+
+```
+/plugin marketplace add siripol/creditcard-payment-dashboard
+/plugin install creditcard-payment-dashboard@creditcard-payment-dashboard
+```
+
+Then reload/restart the session. The three commands below and the
+`credit-card-spending-dashboard` skill become available (namespaced
+`creditcard-payment-dashboard:`). Update later with `/plugin marketplace update`.
+
+**Local / dev** — load a checkout without installing (session-only):
+
+```bash
+claude --plugin-dir /path/to/creditcard-payment-dashboard
+```
 
 ## Quick start (standalone, no install)
 

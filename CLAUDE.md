@@ -32,7 +32,7 @@ python3 build_data.py     # PDFs in statements/ -> data.js + reports + dashboard
 
 ## Slash commands (each maps to one narrow edit)
 
-- `/updateCreditCardStatement` — the monthly run: build + report stats + anomaly checks +
+- `/update-statement` — the monthly run: build + report stats + anomaly checks +
   deliver `dashboard.html`. Command form of the "Standard update routine" in `SKILL.md`.
 - `/set-expiryCard <last5> <mmdd>` — upsert one entry in `cards.config.json` (cycle anchor
   month `MM` + closing day `DD`), then rebuild. Edits config only.

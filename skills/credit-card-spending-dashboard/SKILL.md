@@ -74,10 +74,10 @@ the statement text and emits `cards`, `cardMeta`, and `reduceGroups` into `windo
 
 ## Commands
 
-Commands the user can invoke. `/updateCreditCardStatement` runs the build; the other two edit
+Commands the user can invoke. `/update-statement` runs the build; the other two edit
 exactly one small config/hook file each — never the main `build_data.py` logic.
 
-### `/updateCreditCardStatement`
+### `/update-statement`
 
 Run the monthly update. Collect the newly-attached PDFs (and any in `statements/`), rebuild
 via `python3 build_data.py`, report the build stats and anomaly checks, deliver the refreshed
