@@ -6,7 +6,7 @@
   "plugins": [
     {
       "name": "creditcard-payment-dashboard",
-      "source": ".",
+      "source": "./",
       "version": "0.3.1",
       "description": "Turn monthly credit-card statement PDFs into one self-contained offline dashboard.html plus Markdown reports. Card-count-agnostic; ships no personal data. Commands: /update-statement, /set-expiryCard, /set-recurringRule."
     }
