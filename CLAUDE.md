@@ -89,7 +89,11 @@ keyword→category map, and `merch()` name cleanup. Category keys must stay cons
 ## Data-integrity rules (non-negotiable — never weaken)
 
 - Count real spending only; exclude payments, cashback, credit adjustments, refunds, negatives.
-- Remove matched reversal pairs (same card+date+desc+amount, opposite sign).
+- Remove matched reversal pairs: opposite-sign entries on same `card`+`amount` with a
+  **normalized** description (leading `REVERSAL`/`VOID`/`ยกเลิก`/… stripped, so `REVERSAL X`
+  pairs with `X`). Two-pass: same transaction date first, then any date for leftovers. This is
+  looser than the dedupe key on purpose — do not fold the two together; the dedupe key below
+  stays exact on date and never changes.
 - Use the **transaction date**, not posting date.
 - Read statement month + card from **file content**, not the filename (issuers offset names).
 - Categorize from the **description text**, not the bank MCC code.
