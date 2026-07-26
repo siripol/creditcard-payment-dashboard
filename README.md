@@ -19,7 +19,7 @@ ships with **no personal data**.
 ├── .claude-plugin/plugin.json          # plugin manifest
 ├── commands/                           # slash commands
 │   ├── update-statement.md             #   /update-statement
-│   ├── set-expiryCard.md               #   /set-expiryCard <last5> <mmdd>
+│   ├── set-expiryCard.md               #   /set-expiryCard <last4> <mmdd>
 │   ├── set-recurringRule.md            #   /set-recurringRule <words>
 │   └── list-cards.md                   #   /list-cards
 └── skills/credit-card-spending-dashboard/
@@ -36,11 +36,11 @@ ships with **no personal data**.
 
 - **`/update-statement`** — attach the new statement PDF(s), then run this to rebuild
   `data.js`, the reports, and the offline `dashboard.html`, with build stats and anomaly checks.
-- **`/set-expiryCard <last5> <mmdd>`** — set a card's cycle: `MM` = cycle anchor month, `DD` =
-  statement closing day. Keyed by the card's last 5 digits. e.g. `/set-expiryCard 12345 1015`.
+- **`/set-expiryCard <last4> <mmdd>`** — set a card's cycle: `MM` = cycle anchor month, `DD` =
+  statement closing day. Keyed by the card's last 4 digits. e.g. `/set-expiryCard 1234 1015`.
 - **`/set-recurringRule <describe in words>`** — change what counts as a recurring merchant by
   describing it in plain language; it rewrites the `recurring_rule.js` hook only.
-- **`/list-cards`** — list every card in one table: display name, last 5 digits, and cycle/expiry
+- **`/list-cards`** — list every card in one table: display name, last 4 digits, and cycle/expiry
   date (`mmdd`, decoded). Read-only.
 
 **Default cycle date for new cards.** Add a reserved `_default` key to `cards.config.json` —

@@ -115,14 +115,14 @@ def merch(d):
 
 # ------------------------------------------------------------------ parse
 def card_key(txt):
-    """Return the card identifier = LAST 5 DIGITS of the card number shown on the statement.
+    """Return the card identifier = LAST 4 DIGITS of the card number shown on the statement.
     Statements usually print a masked PAN like '1234-56XX-XXXX-0135'. ADAPT this regex.
     Falls back to 'UNKNOWN' if not found (configure it in cards.config.json)."""
     m2 = re.search(r'(\d[\dX*\- ]{6,}\d)', txt)
     if m2:
         d = re.sub(r'\D', '', m2.group(1))
-        if len(d) >= 5:
-            return d[-5:]
+        if len(d) >= 4:
+            return d[-4:]
     return 'UNKNOWN'
 
 def parse_card_a(path):

@@ -2,7 +2,7 @@
 
 Turn your monthly credit-card **statement PDFs** into a clean, offline, single-file
 HTML dashboard plus Markdown reports. Generic and **card-count-agnostic**: drop in a
-new card's statements and it shows up automatically — configure it by its **last 5
+new card's statements and it shows up automatically — configure it by its **last 4
 digits**.
 
 > **Privacy:** statement PDFs and generated data contain personal financial info.
@@ -44,32 +44,32 @@ python3 build_data.py        # needs python 3.12+, pdftotext (poppler)
 open dashboard.html          # self-contained: no internet, no other files
 ```
 
-## Cards config (by last 5 digits)
+## Cards config (by last 4 digits)
 
 Copy `cards.config.example.json` → `cards.config.json` (git-ignored) and map each
-card's **last 5 digits** to a display name and its statement-cycle date:
+card's **last 4 digits** to a display name and its statement-cycle date:
 
 ```json
 {
-  "01234": { "name": "My Travel Card", "mmdd": "1001" },
-  "56789": { "name": "My Cashback Card", "mmdd": "1115" }
+  "1234": { "name": "My Travel Card", "mmdd": "1001" },
+  "6789": { "name": "My Cashback Card", "mmdd": "1115" }
 }
 ```
 
-- key = **last 5 digits** of the card number (how the dashboard identifies the card)
+- key = **last 4 digits** of the card number (how the dashboard identifies the card)
 - `name` = display name shown in the dashboard
 - `mmdd` = statement-cycle date. **MM** (month) is used as the rewards-accumulation
   **cycle anchor**; **DD** (closing day) is stored for reference.
 
 Cards you don't configure still appear automatically — with a default name
-(`Card ••<last5>`) and a cycle anchor guessed from the first month seen. Colors are
+(`Card ••<last4>`) and a cycle anchor guessed from the first month seen. Colors are
 assigned automatically from a palette.
 
 Optionally set a reserved `_default` entry to give every *new* card a fixed cycle date
 instead of the guessed one:
 
 ```json
-{ "_default": { "mmdd": "1231" }, "01234": { "name": "My Card", "mmdd": "1001" } }
+{ "_default": { "mmdd": "1231" }, "1234": { "name": "My Card", "mmdd": "1001" } }
 ```
 
 On the next build, any detected card with no `mmdd` inherits `_default.mmdd` (here `1231`
@@ -87,13 +87,13 @@ Monthly update (rebuild everything from newly-added PDFs):
 Set a card's cycle from chat instead of editing JSON:
 
 ```
-/set-expiryCard <last5> <mmdd>
+/set-expiryCard <last4> <mmdd>
 ```
 
-e.g. `/set-expiryCard 01234 1001` — upserts that card in `cards.config.json`, then
+e.g. `/set-expiryCard 1234 1001` — upserts that card in `cards.config.json`, then
 rebuilds.
 
-List every card (name, last 5 digits, cycle/expiry `mmdd`) in one table:
+List every card (name, last 4 digits, cycle/expiry `mmdd`) in one table:
 
 ```
 /list-cards

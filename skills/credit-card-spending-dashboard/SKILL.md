@@ -64,9 +64,9 @@ the statement text and emits `cards`, `cardMeta`, and `reduceGroups` into `windo
 
 - **Adding a card = dropping its e-statements into `statements/` and rebuilding.** A new card
   appears on its own — no code edit.
-- Each card is keyed by the **last 5 digits** of its number (read from the statement text).
+- Each card is keyed by the **last 4 digits** of its number (read from the statement text).
 - Colors are auto-assigned from a fixed palette by card order.
-- If a card is not in `cards.config.json`, it still works — it shows as `Card ••<last5>` with
+- If a card is not in `cards.config.json`, it still works — it shows as `Card ••<last4>` with
   its cycle anchor inferred from the earliest month seen.
 
 `cards.config.json` only *names* and *tunes* cards; it never *enables* them.
@@ -87,15 +87,15 @@ single-file `dashboard.html`, and summarize the latest month. This is the comman
 "Standard update routine" at the bottom of this file; the skill also triggers on the phrase
 "update the spending dashboard".
 
-### `/set-expiryCard <last5> <mmdd>`
+### `/set-expiryCard <last4> <mmdd>`
 
-Set a card's **cycle closing date**. `<last5>` = the last 5 digits of the card. `<mmdd>` =
+Set a card's **cycle closing date**. `<last4>` = the last 4 digits of the card. `<mmdd>` =
 `MM` (the month the accumulation cycle anchors on) + `DD` (the statement closing day).
-Example: `/set-expiryCard 12345 1015` → card ••12345, cycle anchors in October, closes on
+Example: `/set-expiryCard 1234 1015` → card ••1234, cycle anchors in October, closes on
 the 15th. Implementation: upsert the entry in `cards.config.json`:
 
 ```json
-{ "12345": { "name": "My Travel Card", "mmdd": "1015" } }
+{ "1234": { "name": "My Travel Card", "mmdd": "1015" } }
 ```
 
 Then rebuild so `cardMeta.anchor` picks up the new month. (Only `MM` currently drives the
@@ -110,7 +110,7 @@ unlisted card keeps the generic behaviour (anchor derived from its earliest stat
 
 ### `/list-cards`
 
-List **every** card in one table: display name, last 5 digits, and cycle/expiry date (`mmdd`).
+List **every** card in one table: display name, last 4 digits, and cycle/expiry date (`mmdd`).
 Merges the detected card set from `CCDATA.cardMeta` (in `data.js`) with each card's `mmdd` from
 `cards.config.json`; cards without an `mmdd` fall back to `_default` or show `—`. `mmdd` is the
 statement-cycle date (anchor month + closing day), **not** a physical card-expiry year.
@@ -145,7 +145,7 @@ more than one charge** that month. Insurance is excluded before the rule runs.
 ```
 statement PDFs
   → pdftotext -layout            (convert each PDF to text; cache the .txt)
-  → detect card (last 5 digits) + statement month FROM THE TEXT CONTENT (not the filename)
+  → detect card (last 4 digits) + statement month FROM THE TEXT CONTENT (not the filename)
   → parse rows per card's layout  (transaction date, description, amount)
   → normalize + de-duplicate
   → categorize from the description text

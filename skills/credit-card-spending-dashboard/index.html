@@ -599,7 +599,7 @@ function openMerchDetail(tr,name,x,ms){
   const col=CO[x.cat];
   const txs=x.tx.slice().sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:b.amt-a.amt);
   const fdate=d=>{const p=d.split('-');return p[2]+'/'+p[1]+'/'+String(+p[0]%100);};
-  const rows=txs.map(t=>`<tr><td style="text-align:left">${fdate(t.d)}</td><td style="text-align:left">${t.desc}</td><td>${t.card}</td><td class="tt">${fmt(t.amt)}</td></tr>`).join('');
+  const rows=txs.map(t=>`<tr><td style="text-align:left">${fdate(t.d)}</td><td style="text-align:left">${t.desc}</td><td>${cardName(t.card)}</td><td class="tt">${fmt(t.amt)}</td></tr>`).join('');
   const d=document.createElement('tr');d.className='txrow';
   d.innerHTML=`<td colspan="${ms.length+4}"><div class="drill">
     <div class="drill-l"><div class="drill-h">แนวโน้มรายเดือน — ${name}</div>
@@ -671,7 +671,7 @@ function allFiltered(){
   if(AS.month!=='ALL')list=list.filter(t=>t.m===AS.month);
   if(AS.cat!=='ALL')list=list.filter(t=>t.cat===AS.cat);
   if(AS.q)list=list.filter(t=>(t.merch+' '+t.desc+' '+TH[t.cat]).toLowerCase().includes(AS.q));
-  const val={m:t=>t.m,card:t=>t.card,cat:t=>TH[t.cat],merch:t=>t.merch,desc:t=>t.desc,amt:t=>t.amt}[AS.sortKey]||(t=>t.m);
+  const val={m:t=>t.m,card:t=>cardName(t.card),cat:t=>TH[t.cat],merch:t=>t.merch,desc:t=>t.desc,amt:t=>t.amt}[AS.sortKey]||(t=>t.m);
   list.sort((a,b)=>{const va=val(a),vb=val(b);const r=(typeof va==='number'&&typeof vb==='number')?va-vb:String(va).localeCompare(String(vb),'th');return AS.sortDir*r || (b.amt-a.amt);});
   return list;
 }
@@ -683,7 +683,7 @@ function drawAll(){
   const slice=list.slice((AS.page-1)*per,AS.page*per);
   const sA=(k,label,cls)=>`<th class="sortable ${cls||''} ${AS.sortKey===k?'act':''}" data-k="${k}">${label} <span class="ar">${AS.sortKey===k?(AS.sortDir<0?'▼':'▲'):'⇅'}</span></th>`;
   let h='<thead><tr>'+sA('m','เดือน')+sA('card','บัตร')+sA('cat','ประเภท')+sA('merch','ร้านค้า')+sA('desc','รายละเอียด')+sA('amt','จำนวนเงิน','tt')+'</tr></thead><tbody>';
-  h+=slice.map(t=>`<tr><td>${MTH[t.m]}</td><td class="tl">${t.card}</td><td class="tl"><span class="dot" style="background:${CO[t.cat]}"></span>${TH[t.cat]}</td><td class="tl">${t.merch}</td><td class="tl" style="white-space:normal">${t.desc}</td><td class="tt">${fmt(t.amt)}</td></tr>`).join('');
+  h+=slice.map(t=>`<tr><td>${MTH[t.m]}</td><td class="tl">${cardName(t.card)}</td><td class="tl"><span class="dot" style="background:${CO[t.cat]}"></span>${TH[t.cat]}</td><td class="tl">${t.merch}</td><td class="tl" style="white-space:normal">${t.desc}</td><td class="tt">${fmt(t.amt)}</td></tr>`).join('');
   h+='</tbody>';document.getElementById('aTable').innerHTML=h;
   document.querySelectorAll('#aTable th.sortable').forEach(th=>th.addEventListener('click',()=>{const k=th.dataset.k;if(AS.sortKey===k)AS.sortDir=-AS.sortDir;else{AS.sortKey=k;AS.sortDir=(k==='amt'?-1:1);}AS.page=1;drawAll();}));
   document.getElementById('aPager').innerHTML=`<button ${AS.page<=1?'disabled':''} id="pprev">‹ ก่อนหน้า</button><span>หน้า ${AS.page} / ${pages}</span><button ${AS.page>=pages?'disabled':''} id="pnext">ถัดไป ›</button>`;
@@ -695,7 +695,7 @@ function exportCSV(){
   const list=allFiltered();
   const esc=s=>'"'+String(s).replace(/"/g,'""')+'"';
   const rows=[['เดือน','บัตร','ประเภท','ร้านค้า','รายละเอียด','จำนวนเงิน']];
-  list.forEach(t=>rows.push([MTH[t.m],t.card,TH[t.cat],t.merch,t.desc,t.amt]));
+  list.forEach(t=>rows.push([MTH[t.m],cardName(t.card),TH[t.cat],t.merch,t.desc,t.amt]));
   const csv='\uFEFF'+rows.map(r=>r.map(esc).join(',')).join('\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download='transactions.csv';a.click();URL.revokeObjectURL(url);
