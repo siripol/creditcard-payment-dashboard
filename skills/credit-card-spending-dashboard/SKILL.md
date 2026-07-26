@@ -187,7 +187,8 @@ more than one charge** that month. Insurance is excluded before the rule runs.
 
 ```
 statement PDFs
-  → pdftotext -layout            (convert each PDF to text; cache the .txt)
+  → pdftotext -layout            (convert each PDF to text; cache the .txt in .txt_cache/)
+                                 (no PDFs present? build from the cached .txt directly)
   → detect card (last 4 digits) + statement month FROM THE TEXT CONTENT (not the filename)
   → parse rows per card's layout  (transaction date, description, amount)
   → normalize + de-duplicate
