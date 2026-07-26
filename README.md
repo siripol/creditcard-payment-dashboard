@@ -1,8 +1,5 @@
 # creditcard-payment-dashboard
 
-[![GitHub repo](https://img.shields.io/badge/GitHub-creditcard--payment--dashboard-181717?logo=github)](https://github.com/siripol/creditcard-payment-dashboard)
-[![Release](https://img.shields.io/github/v/release/siripol/creditcard-payment-dashboard?logo=github&label=release)](https://github.com/siripol/creditcard-payment-dashboard/releases/latest)
-
 A **Cowork / Claude Code plugin** that turns monthly credit-card **statement PDFs** into a
 single self-contained, offline HTML dashboard plus Markdown reports. It is **generic and
 card-count-agnostic** — drop in a new card's e-statements and it appears automatically — and
