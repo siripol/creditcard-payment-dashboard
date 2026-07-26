@@ -1,6 +1,7 @@
 # creditcard-payment-dashboard
 
 [![GitHub repo](https://img.shields.io/badge/GitHub-creditcard--payment--dashboard-181717?logo=github)](https://github.com/siripol/creditcard-payment-dashboard)
+[![Release](https://img.shields.io/github/v/release/siripol/creditcard-payment-dashboard?logo=github&label=release)](https://github.com/siripol/creditcard-payment-dashboard/releases/latest)
 
 A **Cowork / Claude Code plugin** that turns monthly credit-card **statement PDFs** into a
 single self-contained, offline HTML dashboard plus Markdown reports. It is **generic and
@@ -54,7 +55,23 @@ This repo *is* the plugin (it carries both `.claude-plugin/plugin.json` and a
 
 Then reload/restart the session. The three commands below and the
 `credit-card-spending-dashboard` skill become available (namespaced
-`creditcard-payment-dashboard:`). Update later with `/plugin marketplace update`.
+`creditcard-payment-dashboard:`).
+
+**Pull later updates** — after new commits land on `main`, refresh the cache then update:
+
+```
+/plugin marketplace update creditcard-payment-dashboard
+/plugin update creditcard-payment-dashboard@creditcard-payment-dashboard
+```
+
+**Manage / uninstall:**
+
+```
+/plugin list                                                  # what's installed
+/plugin marketplace list                                      # configured marketplaces
+/plugin uninstall creditcard-payment-dashboard@creditcard-payment-dashboard
+/plugin marketplace remove creditcard-payment-dashboard
+```
 
 **Local / dev** — load a checkout without installing (session-only):
 
