@@ -23,11 +23,8 @@ Steps:
    - latest month unchanged after adding a file → that file may not have been read.
    - total dropped vs. the last run → investigate before reporting.
    - an unexpected new card key appeared → confirm it's a real new card, not a mis-parse.
-6. **Relay merchant-grouping suggestions.** If the build prints a `MERCHANT GROUPING
-   SUGGESTIONS` block (merchants that look split by branch/ref), show them and offer the ready
-   `/set-merchantRule` line so the user can confirm. Do not apply them automatically.
-7. **Deliver** `dashboard.html` to the user and summarize the latest month: total, change vs.
+6. **Deliver** `dashboard.html` to the user and summarize the latest month: total, change vs.
    the previous month, top movers, top merchants, points to review, and a couple of concrete
    reduction ideas (framed as estimates, not financial advice).
-8. **Never guess numbers** — every figure must come from the generated data/reports. On a
+7. **Never guess numbers** — every figure must come from the generated data/reports. On a
    build error, show the error and stop; do not summarize from stale data.

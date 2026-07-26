@@ -18,7 +18,6 @@ digits**.
 | `recurring_rule.js` | Hook: the "recurring merchant" rule (edit via `/set-recurringRule`) |
 | `data.sample.js` | Fake sample data so you can preview the dashboard immediately |
 | `cards.config.example.json` | Card config template (copy → `cards.config.json`) |
-| `merchant_rules.example.json` | Merchant category + name-cleanup template (copy → `merchant_rules.json`) |
 | `vendor/chart.umd.js` | Chart.js (MIT) — inlined into the single-file dashboard |
 | `vendor/fonts/` | IBM Plex Sans Thai (OFL) — inlined into the single-file dashboard |
 
@@ -85,8 +84,8 @@ Monthly update (rebuild everything from newly-added PDFs):
 /update-statement
 ```
 
-Re-group merchants and re-categorize from the current rules and rebuild, **without** importing
-new PDFs (use after changing a merchant rule):
+Re-categorize and rebuild from the existing statements, **without** importing new PDFs (use
+after changing a card/recurring rule):
 
 ```
 /update-dashboard
@@ -105,12 +104,6 @@ List every card (name, last 4 digits, cycle/expiry `mmdd`) in one table:
 
 ```
 /list-cards
-```
-
-List all merchant rules (category / cleanup / exclude):
-
-```
-/list-merchantRules
 ```
 
 ## Recurring-merchant rule (a hook — describe it in words)
@@ -132,21 +125,6 @@ at the top of the file.
 one charge** that month (insurance excluded). If the hook is missing, the dashboard
 falls back to this default. The rule drives the **dashboard**; the Markdown report's
 recurring list uses the default.
-
-## Merchant rules — categories & name cleanup (update-safe)
-
-Map merchants to categories and clean up their display names in `merchant_rules.json`
-(git-ignored, **not** shipped — so it survives plugin updates, unlike editing `build_data.py`).
-Copy `merchant_rules.example.json` → `merchant_rules.json`, or describe rules in words:
-
-```
-/set-merchantRule GRAB is Transport, SHOPEE is Online Shopping, and clean GRAB up to "Grab"
-```
-
-Three sections: `category` (`"KEYWORD": "CategoryKey"`), `cleanup` (`"KEYWORD": "Display Name"`,
-stops one merchant splitting), `exclude` (extra non-spending keywords). User rules win over the
-built-in defaults; `EXCLUDE` always applies first; an invalid category value is ignored. Rebuild
-to apply.
 
 ## Requirements
 
