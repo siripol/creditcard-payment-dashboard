@@ -9,8 +9,9 @@ description: >
   answer analytical questions about their spending, add a card, or edit the categorization,
   cycle, or recurring-merchant rules. Trigger phrases: "process my statements", "update the
   spending dashboard", "how much did I spend", "add a card", "set the closing date", "change
-  what counts as a recurring shop", "list my cards", "/set-expiryCard", "/set-recurringRule",
-  "/list-cards".
+  what counts as a recurring shop", "list my cards", "map a merchant to a category",
+  "re-group merchants / rebuild the dashboard", "/set-expiryCard", "/set-recurringRule",
+  "/list-cards", "/set-merchantRule", "/list-merchantRules", "/update-dashboard".
 ---
 
 # Credit-Card Spending Dashboard
@@ -75,9 +76,11 @@ the statement text and emits `cards`, `cardMeta`, and `reduceGroups` into `windo
 
 ## Commands
 
-Commands the user can invoke. `/update-statement` runs the build; `/set-expiryCard` and
-`/set-recurringRule` each edit exactly one small config/hook file — never the main
-`build_data.py` logic; `/list-cards` is read-only.
+Commands the user can invoke. `/update-statement` (import new PDFs + rebuild) and
+`/update-dashboard` (re-group/re-categorize from existing statements, no new imports) both run
+the build; `/set-expiryCard`, `/set-recurringRule`, and `/set-merchantRule` each edit exactly
+one small config/hook file — never the main `build_data.py` logic; `/list-cards` and
+`/list-merchantRules` are read-only.
 
 ### `/update-statement`
 
@@ -86,6 +89,14 @@ via `python3 build_data.py`, report the build stats and anomaly checks, deliver 
 single-file `dashboard.html`, and summarize the latest month. This is the command form of the
 "Standard update routine" at the bottom of this file; the skill also triggers on the phrase
 "update the spending dashboard".
+
+### `/update-dashboard`
+
+Re-group merchants and re-categorize business types from the **current** rules, then rebuild —
+**no new PDFs**. Use after `/set-merchantRule` or any rules edit. Same engine as
+`/update-statement` (each build re-reads `merchant_rules.json` and re-runs `cat()`/`merch()` on
+every row), minus the import step; requires `statements/` (or `.txt_cache/`) to still be present,
+since the dashboard can't be re-categorized from `data.js` alone.
 
 ### `/set-expiryCard <last4> <mmdd>`
 
@@ -129,6 +140,38 @@ Claude rewrites the body of `window.CCRULE = function isRecurring(m){ ... }` acc
 The input object `m` and its fields are documented at the top of `recurring_rule.js`
 (`maxRun` = longest consecutive-month run, `multi` = months with >1 charge, `mCount`,
 `months`, `total`, `n`, `cat`, …). Return `true` = counts as recurring.
+
+### `/set-merchantRule <describe the mapping in plain words>`
+
+Map merchants to categories and clean up merchant names by *describing them in words*. Claude
+writes the entries into **`merchant_rules.json` only** (git-ignored, **not** shipped — so it
+survives plugin updates, unlike editing `build_data.py`). `cat()` / `merch()` read this file
+and apply the user's rules on top of the built-in defaults. Three sections:
+
+- **`category`** — `"KEYWORD": "CategoryKey"` (value must be a valid `CAT_ORDER` key). e.g.
+  `GRAB → Transport & Ride-hailing`, `SHOPEE → Online Shopping`.
+- **`cleanup`** — `"KEYWORD": "Display Name"` so one merchant stops splitting into many names
+  (e.g. `GRAB → Grab`).
+- **`exclude`** — extra non-spending keywords to drop (payments/cashback/refunds already are).
+
+User rules win over defaults; EXCLUDE always applies first; an invalid category value is ignored.
+Rebuild after editing so the rules take effect.
+
+### `/list-merchantRules`
+
+Read-only: print the current `merchant_rules.json` as tables (category, cleanup, exclude), and
+flag any `category` value that is not a valid `CAT_ORDER` key (ignored at build time). If the
+file is absent, report that only the built-in defaults apply.
+
+### Merchant grouping (auto + suggest)
+
+`merch()` **auto-collapses** names that differ only by a trailing counter/ref, so
+`Awn…Siam Paragon 01/10`, `…02/10`, `…03/10` become one merchant. When names share a leading
+brand word but differ in the middle (e.g. `Shell 0186F Co Temjaib Bangkok` vs
+`Shell 0202F Co Lertvan Bangkok`) it does **not** merge blindly — the build prints a
+**MERCHANT GROUPING SUGGESTIONS** block listing the cluster and a ready `/set-merchantRule`
+line. Relay those suggestions to the user and let them confirm (the "ask when unsure" path).
+Nothing here changes totals; merchant grouping is display-only.
 
 **Default rule (shipped):** paid in **≥3 consecutive months**, OR appears in **≥3 months with
 more than one charge** that month. Insurance is excluded before the rule runs.
@@ -205,6 +248,8 @@ Keep all identifying specifics out of the committed code:
 - **Category grouping**: which categories are essential / reducible / one-off.
 - **Recurring rule**: `recurring_rule.js` (via `/set-recurringRule`).
 - **Cycle anchor / closing day** per card: `cards.config.json` (via `/set-expiryCard`).
+- **Merchant→category + name cleanup**: `merchant_rules.json` (via `/set-merchantRule`);
+  git-ignored, not shipped, so it survives plugin updates.
 
 ---
 

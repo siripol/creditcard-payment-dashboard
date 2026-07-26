@@ -3,6 +3,8 @@ statements/
 **/statements/
 cards.config.json
 **/cards.config.json
+merchant_rules.json
+**/merchant_rules.json
 data.js
 **/data.js
 dashboard.html
