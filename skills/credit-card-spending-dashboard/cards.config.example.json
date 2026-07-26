@@ -1,0 +1,5 @@
+{
+  "_comment": "Copy this file to cards.config.json and edit locally. Key = LAST 5 DIGITS of the card number. name = display name. mmdd = statement-cycle date (MM=month used as accumulation-cycle anchor, DD=closing day). cards.config.json is git-ignored so real card numbers never reach the repo. You can also set entries with the /set-expiryCard command.",
+  "01234": { "name": "My Travel Card", "mmdd": "1001" },
+  "56789": { "name": "My Cashback Card", "mmdd": "1115" }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "creditcard-payment-dashboard",
+  "version": "0.3.1",
+  "description": "แดชบอร์ดค่าใช้จ่ายบัตรเครดิตจากไฟล์ statement PDF — รองรับบัตรกี่ใบก็ได้อัตโนมัติ (วางไฟล์บัตรใหม่แล้วขึ้นเอง). คำสั่ง: /updateCreditCardStatement (อัปเดตรายเดือน), /set-expiryCard (ตั้งรอบตัดบัตร), /set-recurringRule (ตั้งกฎร้านค้าประจำด้วยคำพูด). Personal credit-card spending dashboard from statement PDFs — auto-scales to any number of cards; includes /updateCreditCardStatement, /set-expiryCard, and /set-recurringRule commands.",
+  "author": {
+    "name": "SN"
+  },
+  "keywords": ["credit-card", "statement", "spending", "finance", "dashboard", "cowork"]
+}
