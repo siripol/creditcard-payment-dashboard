@@ -9,7 +9,8 @@ WHAT IT DOES
   3. Categorises + normalises merchant names from the Description text.
   4. Applies the data rules:
        - drop payments / cashback / credit-adjustments / refunds / negatives
-       - remove matched debit<->reversal pairs (same card+desc+amount)
+       - remove matched debit<->reversal pairs (same card+amount, desc-normalized so
+         "REVERSAL X" pairs with "X"; same date preferred, any date accepted)
        - DEDUPE by a stable key so re-importing the same statement never
          double-counts (this is the human-error guard).
   5. Writes data.js  ->  window.CCDATA = { ... }
@@ -70,6 +71,38 @@ def ensure_card_defaults(cfg, cards):
             cfg[k] = merged
             changed = True
     return changed
+
+def _rev_norm(s):
+    """Normalise a description for reversal matching: collapse whitespace, uppercase, and
+    strip a leading reversal marker so 'REVERSAL X' pairs with 'X'."""
+    s = re.sub(r'\s+', ' ', s.strip()).upper()
+    return re.sub(r'^(REVERSAL|REVERSE|REV|VOID|CANCELLATION|CANCELLED|CANCEL|'
+                  r'ยกเลิก|โอนกลับ|'
+                  r'คืนรายการ)\b[\s:\-]*', '', s)
+
+def cancel_reversal_pairs(dedup):
+    """Cancel a positive charge against an opposite-sign reversal. Matches on
+    (card, amount, normalized-desc); two passes so a same-date reversal is preferred and a
+    cross-date one still cancels. Only non-EXCLUDE negatives are eligible (plain
+    refunds/cashback are EXCLUDE and dropped separately). Returns (drop_set, pair_count).
+    Each row is a dict with card / date / desc / amt / cat."""
+    from collections import defaultdict
+    drop = set(); used_neg = set()
+    def _pair(keyfn):
+        idx = defaultdict(list)
+        for i, r in enumerate(dedup):
+            if i not in used_neg and r['amt'] < 0 and r['cat'] != 'EXCLUDE':
+                idx[keyfn(r, round(-r['amt'], 2))].append(i)
+        c = 0
+        for i, r in enumerate(dedup):
+            if i not in drop and r['amt'] > 0 and r['cat'] != 'EXCLUDE':
+                lst = idx.get(keyfn(r, round(r['amt'], 2)))
+                if lst:
+                    used_neg.add(lst.pop()); drop.add(i); c += 1
+        return c
+    pairs  = _pair(lambda r, a: (r['card'], r['date'], _rev_norm(r['desc']), a))  # same date
+    pairs += _pair(lambda r, a: (r['card'], _rev_norm(r['desc']), a))             # any date
+    return drop, pairs
 
 MON = {m: i + 1 for i, m in enumerate(
     ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'])}
@@ -217,18 +250,8 @@ def build():
             continue
         seen.add(key); dedup.append(r)
 
-    # ---- reversal pairs: a positive expense + a same (card,date,desc,amount) credit cancel both ----
-    from collections import defaultdict
-    neg = defaultdict(list)
-    for i, r in enumerate(dedup):
-        if r['amt'] < 0 and r['cat'] != 'EXCLUDE':
-            neg[(r['card'], r['date'], r['desc'], round(-r['amt'], 2))].append(i)
-    drop = set(); pairs = 0
-    for i, r in enumerate(dedup):
-        if r['amt'] > 0 and r['cat'] != 'EXCLUDE':
-            k = (r['card'], r['date'], r['desc'], round(r['amt'], 2))
-            if neg.get(k):
-                neg[k].pop(); drop.add(i); pairs += 1
+    # ---- reversal pairs: a positive expense + an opposite-sign reversal cancel both ----
+    drop, pairs = cancel_reversal_pairs(dedup)
 
     expenses = [r for i, r in enumerate(dedup)
                 if i not in drop and r['cat'] != 'EXCLUDE' and r['amt'] > 0]

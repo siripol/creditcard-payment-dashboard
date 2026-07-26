@@ -163,7 +163,11 @@ These keep the numbers correct and reproducible. Do not weaken them.
 - **Count real spending only.** Exclude card payments, cashback, credit adjustments,
   refunds, and any negative/credit lines.
 - **Remove cancelled reversal pairs.** When a charge and an equal, opposite entry match on
-  (card, date, description, amount), drop both.
+  (card, amount, description), drop both. The description is normalized first — a leading
+  reversal marker (`REVERSAL`/`VOID`/`ยกเลิก`/…) is stripped so `REVERSAL X` pairs with `X`.
+  Matching runs in two passes: same transaction date first, then any date for leftovers, so a
+  same-day reversal is preferred but a cross-day one still cancels. (The dedupe key is separate
+  and stays exact on date — see below.)
 - **Use the transaction date**, not the posting date.
 - **Read the statement month and card from the file content**, not the filename. Some issuers
   name files with an offset — always trust the content.
