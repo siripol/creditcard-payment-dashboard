@@ -19,9 +19,12 @@ ships with **no personal data**.
 ├── .claude-plugin/plugin.json          # plugin manifest
 ├── commands/                           # slash commands
 │   ├── update-statement.md             #   /update-statement
+│   ├── update-dashboard.md             #   /update-dashboard
 │   ├── set-expiryCard.md               #   /set-expiryCard <last4> <mmdd>
 │   ├── set-recurringRule.md            #   /set-recurringRule <words>
-│   └── list-cards.md                   #   /list-cards
+│   ├── list-cards.md                   #   /list-cards
+│   ├── set-merchantRule.md             #   /set-merchantRule <words>
+│   └── list-merchantRules.md           #   /list-merchantRules
 └── skills/credit-card-spending-dashboard/
     ├── SKILL.md                        # the skill (method + rules)
     ├── build_data.py                   # PDFs -> data.js + reports + dashboard.html
@@ -29,6 +32,7 @@ ships with **no personal data**.
     ├── recurring_rule.js               # hook: the "recurring merchant" rule
     ├── data.sample.js                  # synthetic sample data for instant preview
     ├── cards.config.example.json       # copy -> cards.config.json and fill in
+    ├── merchant_rules.example.json     # copy -> merchant_rules.json (category + name rules)
     └── vendor/                         # Chart.js (MIT) + IBM Plex Sans Thai (OFL)
 ```
 
@@ -36,12 +40,19 @@ ships with **no personal data**.
 
 - **`/update-statement`** — attach the new statement PDF(s), then run this to rebuild
   `data.js`, the reports, and the offline `dashboard.html`, with build stats and anomaly checks.
+- **`/update-dashboard`** — re-group merchants and re-categorize from the current rules and
+  rebuild the dashboard, **without** importing new PDFs. Use after changing a merchant rule.
 - **`/set-expiryCard <last4> <mmdd>`** — set a card's cycle: `MM` = cycle anchor month, `DD` =
   statement closing day. Keyed by the card's last 4 digits. e.g. `/set-expiryCard 1234 1015`.
 - **`/set-recurringRule <describe in words>`** — change what counts as a recurring merchant by
   describing it in plain language; it rewrites the `recurring_rule.js` hook only.
 - **`/list-cards`** — list every card in one table: display name, last 4 digits, and cycle/expiry
   date (`mmdd`, decoded). Read-only.
+- **`/set-merchantRule <describe in words>`** — map merchants to categories and clean up merchant
+  names (e.g. `SHOPEE → Online Shopping`, and `GRAB → Grab` so one shop stops splitting). Writes
+  `merchant_rules.json` only (git-ignored, not shipped → survives updates).
+- **`/list-merchantRules`** — show the current merchant rules (category / cleanup / exclude).
+  Read-only.
 
 **Default cycle date for new cards.** Add a reserved `_default` key to `cards.config.json` —
 e.g. `"_default": { "mmdd": "1231" }` — and any newly-detected card with no `mmdd` inherits it
