@@ -37,23 +37,10 @@ OUT_JS     = os.environ.get("CC_OUT", os.path.join(_HERE, "data.js"))
 OUT_HTML   = os.environ.get("CC_DASH", os.path.join(_HERE, "dashboard.html"))
 VENDOR_CHARTJS = os.path.join(_HERE, "vendor", "chart.umd.js")
 CARDS_CONFIG = os.path.join(_HERE, "cards.config.json")
-MERCHANT_RULES = os.path.join(_HERE, "merchant_rules.json")
-CARD_PALETTE = [("#134e7a","#7ba0c4"),("#c65a2b","#e2a06f"),("#0f6e56","#6db3a0"),("#6a3d9a","#a684c7"),("#9a6a00","#d0ad5a"),("#8a1f4b","#c77394")]
+CARD_PALETTE =[("#134e7a","#7ba0c4"),("#c65a2b","#e2a06f"),("#0f6e56","#6db3a0"),("#6a3d9a","#a684c7"),("#9a6a00","#d0ad5a"),("#8a1f4b","#c77394")]
 def load_card_config():
     if os.path.isfile(CARDS_CONFIG):
         try: return json.load(open(CARDS_CONFIG, encoding="utf-8"))
-        except Exception: return {}
-    return {}
-
-def load_merchant_rules():
-    """Personal, update-safe merchant rules (git-ignored, not shipped). Shape:
-    {"exclude":[kw,...], "category":{kw:CategoryKey,...}, "cleanup":{kw:"Display Name",...}}.
-    Keywords are matched case-insensitively as substrings of the raw description. Absent file
-    or bad JSON -> {} (pure built-in defaults)."""
-    if os.path.isfile(MERCHANT_RULES):
-        try:
-            r = json.load(open(MERCHANT_RULES, encoding="utf-8"))
-            return r if isinstance(r, dict) else {}
         except Exception: return {}
     return {}
 
@@ -120,28 +107,22 @@ def cancel_reversal_pairs(dedup):
 MON = {m: i + 1 for i, m in enumerate(
     ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'])}
 
-# Spending category keys (display order). Module-level so cat() can validate user overrides;
-# build() reuses this for the CCDATA payload. Keys must match TH / COLORS / GROUP in build().
+# Spending category keys (display order). Module-level; build() reuses this for the CCDATA
+# payload. Keys must match TH / COLORS / GROUP in build().
 CAT_ORDER = ['Travel','Insurance','Shopping & Retail','Food & Dining',
              'Subscriptions & Digital','Groceries & Convenience','Transport & Ride-hailing',
              'Online Shopping','Health & Medical','Utilities & Telecom','Fuel',
              'Card Fees','Other']
 
 # ------------------------------------------------------------------ categorise
-def cat(d, rules=None):
+def cat(d):
     """Map a raw transaction DESCRIPTION to a spending category.
-    Order: built-in EXCLUDE (+ user 'exclude' keywords) -> user 'category' overrides ->
-    built-in EXAMPLE keyword rules. User rules come from merchant_rules.json (update-safe);
-    an override is applied only if its value is a valid CAT_ORDER key. Non-spending lines
-    stay EXCLUDE first so they are always dropped."""
+    EXAMPLE keyword rules only -- replace the keywords in has(...) with YOUR merchants.
+    Keep EXCLUDE first so non-spending lines are dropped. Category KEYS must match
+    CAT_ORDER / TH / COLORS / GROUP in build()."""
     D = d.upper()
     def has(*ks): return any(k in D for k in ks)
-    ex = [k.upper() for k in (rules or {}).get('exclude', []) if k]
-    if has('PAYMENT', 'CASHBACK', 'CASH BACK', 'REFUND', 'CR ADJUSTMENT') or any(k in D for k in ex):
-        return 'EXCLUDE'
-    for kw, val in (rules or {}).get('category', {}).items():
-        if kw and val in CAT_ORDER and kw.upper() in D:
-            return val
+    if has('PAYMENT', 'CASHBACK', 'CASH BACK', 'REFUND', 'CR ADJUSTMENT'):  return 'EXCLUDE'
     if has('ANNUAL FEE', 'MEMBERSHIP FEE'):                                 return 'Card Fees'
     if has('TAXI', 'RIDE HAIL', 'TRANSIT', 'METRO', 'TOLL', 'EXPRESSWAY'):  return 'Transport & Ride-hailing'
     if has('FUEL', 'PETROL', 'GAS STATION'):                                return 'Fuel'
@@ -157,47 +138,20 @@ def cat(d, rules=None):
     return 'Other'
 
 # ------------------------------------------------------------------ merchant
-def merch(d, rules=None):
-    """Turn a raw description into a clean display name. User 'cleanup' rules
-    (merchant_rules.json, update-safe) win over the built-in EXAMPLE rules -- e.g. mapping
-    'GRAB' -> 'Grab' stops one merchant splitting into many names."""
+def merch(d):
+    """Turn a raw description into a clean display name. EXAMPLE rules only."""
     D = d.upper()
-    for k, v in (rules or {}).get('cleanup', {}).items():
-        if k and v and k.upper() in D:
-            return v
-    rules_builtin = [
+    rules = [
         ('SUPERMARKET', 'Supermarket'),
         ('COFFEE', 'Coffee Shop'),
         ('FUEL', 'Fuel Station'),
         # ('YOUR RAW KEYWORD', 'Your Display Name'),
     ]
-    for k, v in rules_builtin:
+    for k, v in rules:
         if k in D:
             return v
     n = re.sub(r'\s{2,}.*$', '', d).strip()
-    # Safe auto-collapse: drop a trailing counter/ref so "X 01/10","X 02/10" group as one "X".
-    n = re.sub(r'\s+\d{1,3}\s*/\s*\d{1,3}$', '', n).strip()   # installment counter e.g. 01/10
-    n = re.sub(r'\s+#?\d{3,}[A-Za-z]?$', '', n).strip()       # trailing ref/branch number
     return n.title() if n.isupper() else n
-
-def suggest_merchant_groups(names, cleanup=None, min_group=3):
-    """Suggest (never auto-apply) merchants that look split by branch/ref. Groups distinct
-    display names by their leading word; a cluster of >= min_group names sharing a first word
-    but differing after it is likely one merchant. Skips first words that are already covered by
-    a cleanup rule, pure numbers, or too short. Returns [(keyword, [sample names]), ...] sorted
-    by cluster size. The user confirms each via /set-merchantRule -- this is the 'ask when
-    unsure' path, so nothing here changes totals."""
-    from collections import defaultdict
-    covered = {k.upper() for k in (cleanup or {}).keys()}
-    groups = defaultdict(set)
-    for nm in names:
-        first = re.split(r'\s+', nm.strip(), maxsplit=1)[0]
-        key = first.upper()
-        if len(key) < 3 or key.isdigit() or key in covered:
-            continue
-        groups[key].add(nm)
-    out = [(k, sorted(v)[:5]) for k, v in groups.items() if len(v) >= min_group]
-    return sorted(out, key=lambda x: -len(x[1]))
 
 # ------------------------------------------------------------------ parse
 def card_key(txt):
@@ -296,11 +250,10 @@ def build():
             r['card'] = key
         rows += recs
 
-    # categorise (with update-safe personal overrides from merchant_rules.json)
-    mrules = load_merchant_rules()
+    # categorise
     for r in rows:
-        r['cat'] = cat(r['desc'], mrules)
-        r['merch'] = merch(r['desc'], mrules)
+        r['cat'] = cat(r['desc'])
+        r['merch'] = merch(r['desc'])
 
     raw_n = len(rows)
 
@@ -374,15 +327,6 @@ def build():
     print(f"files={len(built_from)}  raw_lines={raw_n}  duplicates_removed={dup_removed}  "
           f"reversal_pairs={pairs}  final_expenses={len(tx)}")
     print(f"wrote {OUT_JS}  ({os.path.getsize(OUT_JS):,} bytes)")
-
-    # Suggest (don't auto-apply) likely same-merchant groups so the user can confirm a rule.
-    sugg = suggest_merchant_groups(sorted({t['merch'] for t in tx}), mrules.get('cleanup'))
-    if sugg:
-        print("\nMERCHANT GROUPING SUGGESTIONS (same merchant? confirm with /set-merchantRule):")
-        for kw, samples in sugg:
-            print(f"  {kw}: {len(samples)} names look alike -> " + " | ".join(samples[:3])
-                  + (" …" if len(samples) >= 5 else ""))
-            print(f'     if same merchant: /set-merchantRule cleanup "{kw}" to "{kw.title()}"')
     return payload
 
 

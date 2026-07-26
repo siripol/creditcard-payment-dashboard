@@ -1,7 +1,7 @@
 {
   "name": "creditcard-payment-dashboard",
-  "version": "0.6.2",
-  "description": "แดชบอร์ดค่าใช้จ่ายบัตรเครดิตจากไฟล์ statement PDF — รองรับบัตรกี่ใบก็ได้อัตโนมัติ (วางไฟล์บัตรใหม่แล้วขึ้นเอง). คำสั่ง: /update-statement (อัปเดตรายเดือน), /update-dashboard (จัดกลุ่มร้าน/หมวดใหม่ + สร้างแดชบอร์ดใหม่ ไม่ต้องนำเข้าไฟล์ใหม่), /set-expiryCard (ตั้งรอบตัดบัตร), /set-recurringRule (ตั้งกฎร้านค้าประจำด้วยคำพูด), /list-cards (แสดงบัตรทั้งหมด: ชื่อ/เลข 4 ตัวท้าย/รอบตัดบัตร), /set-merchantRule (จับคู่ร้านค้า→หมวด + ล้างชื่อร้าน), /list-merchantRules (แสดงกฎร้านค้าทั้งหมด). Personal credit-card spending dashboard from statement PDFs — auto-scales to any number of cards; includes /update-statement, /update-dashboard, /set-expiryCard, /set-recurringRule, /list-cards, /set-merchantRule, and /list-merchantRules commands.",
+  "version": "0.7.0",
+  "description": "แดชบอร์ดค่าใช้จ่ายบัตรเครดิตจากไฟล์ statement PDF — รองรับบัตรกี่ใบก็ได้อัตโนมัติ (วางไฟล์บัตรใหม่แล้วขึ้นเอง). คำสั่ง: /update-statement (อัปเดตรายเดือน), /update-dashboard (จัดกลุ่มร้าน/หมวดใหม่ + สร้างแดชบอร์ดใหม่ ไม่ต้องนำเข้าไฟล์ใหม่), /set-expiryCard (ตั้งรอบตัดบัตร), /set-recurringRule (ตั้งกฎร้านค้าประจำด้วยคำพูด), /list-cards (แสดงบัตรทั้งหมด: ชื่อ/เลข 4 ตัวท้าย/รอบตัดบัตร). Personal credit-card spending dashboard from statement PDFs — auto-scales to any number of cards; includes /update-statement, /update-dashboard, /set-expiryCard, /set-recurringRule, and /list-cards commands.",
   "author": {
     "name": "SN"
   },

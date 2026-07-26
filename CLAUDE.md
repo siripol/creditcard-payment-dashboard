@@ -34,20 +34,15 @@ python3 build_data.py     # PDFs in statements/ -> data.js + reports + dashboard
 
 - `/update-statement` — the monthly run: build + report stats + anomaly checks +
   deliver `dashboard.html`. Command form of the "Standard update routine" in `SKILL.md`.
-- `/update-dashboard` — re-group/re-categorize from current rules + rebuild, **no new PDFs**.
-  Same `build_data.py` engine (each build re-runs `cat()`/`merch()` with fresh
-  `merchant_rules.json`); needs `statements/` or `.txt_cache/` present.
+- `/update-dashboard` — re-categorize + rebuild from existing statements, **no new PDFs**.
+  Same `build_data.py` engine (each build re-runs `cat()`/`merch()` and re-reads
+  `cards.config.json` / `recurring_rule.js`); needs `statements/` or `.txt_cache/` present.
 - `/set-expiryCard <last4> <mmdd>` — upsert one entry in `cards.config.json` (cycle anchor
   month `MM` + closing day `DD`), then rebuild. Edits config only.
 - `/set-recurringRule <plain words>` — translate a natural-language rule into the
   `recurring_rule.js` hook body **only**. Never touches `build_data.py` / `index.html`.
 - `/list-cards` — read-only: print a table of every card (name, last 4 digits, cycle/expiry
   `mmdd`) by merging `CCDATA.cardMeta` (from `data.js`) with per-card `mmdd` in `cards.config.json`.
-- `/set-merchantRule <plain words>` — write merchant→category, name-cleanup, and extra-exclude
-  entries into `merchant_rules.json` **only** (git-ignored, not shipped). Never touches
-  `build_data.py`; `cat()`/`merch()` read the file and apply overrides on top of defaults.
-- `/list-merchantRules` — read-only: print `merchant_rules.json` (category / cleanup / exclude)
-  as tables, flagging any invalid category value.
 
 ## Architecture (the big picture)
 
@@ -99,21 +94,7 @@ the JS hook — the report stays on the default unless the user explicitly asks 
 **Per-bank adaptation points** (marked as generic EXAMPLES in `build_data.py`): `card_key()`
 regex, `parse_card_a` / `parse_card_b` layouts + their routing in `build()`, the `cat()`
 keyword→category map, and `merch()` name cleanup. Category keys must stay consistent across
-`cat()`, `CAT_ORDER` (now module-level), `TH`, `COLORS`, `GROUP`.
-
-**Update-safe personal overrides:** `cat()` and `merch()` read `merchant_rules.json`
-(`load_merchant_rules()`, git-ignored, ships only `merchant_rules.example.json`) and apply the
-user's `category` / `cleanup` / `exclude` entries on top of the built-in EXAMPLES — user rules
-win, EXCLUDE stays first, invalid category values are ignored. Prefer this file (via
-`/set-merchantRule`) over editing the `cat()`/`merch()` bodies, which a plugin update would
-overwrite. Parser adaptation (`card_key`/`parse_*`) is bank-specific logic and still lives in
-`build_data.py`.
-
-**Merchant grouping:** `merch()` auto-collapses names differing only by a trailing counter/ref
-(`…01/10` vs `…02/10`). For look-alike clusters that share a leading word but differ mid-string,
-`suggest_merchant_groups()` prints a `MERCHANT GROUPING SUGGESTIONS` block at build end (never
-auto-merges — the user confirms with `/set-merchantRule`). Grouping is display-only; totals and
-the dedupe key are unaffected.
+`cat()`, `CAT_ORDER` (module-level), `TH`, `COLORS`, `GROUP`.
 
 ## Data-integrity rules (non-negotiable — never weaken)
 
