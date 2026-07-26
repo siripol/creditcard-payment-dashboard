@@ -9,8 +9,16 @@ card-count-agnostic** — drop in a new card's e-statements and it appears autom
 ships with **no personal data**.
 
 > **Privacy first.** Statement PDFs and generated data contain personal financial information.
-> This repo commits only code. `statements/`, `data.js`, generated reports, `dashboard.html`,
-> and `cards.config.json` are git-ignored — never commit them.
+> This repo commits only code. `statements/`, `.txt_cache/`, `data.js`, generated reports,
+> `dashboard.html`, `cards.config.json`, and `merchant_rules.json` are git-ignored — never
+> commit them.
+
+**No database — flat files only.** PDFs in `statements/` are the source; each is extracted to
+`.txt_cache/<name>.txt` (the complete raw text). `data.js` (`window.CCDATA`) is the regenerable
+processed dataset the dashboard reads. Since `.txt_cache` keeps the full text, a rebuild works
+even after the source PDFs are removed — archive/delete the PDFs and you can still
+re-categorize and regenerate. `.txt_cache` is git-ignored and local, so back it up yourself if
+you delete the PDFs.
 
 ## What's in this repo
 

@@ -85,6 +85,13 @@ Monthly update (rebuild everything from newly-added PDFs):
 /update-statement
 ```
 
+Re-group merchants and re-categorize from the current rules and rebuild, **without** importing
+new PDFs (use after changing a merchant rule):
+
+```
+/update-dashboard
+```
+
 Set a card's cycle from chat instead of editing JSON:
 
 ```
@@ -98,6 +105,12 @@ List every card (name, last 4 digits, cycle/expiry `mmdd`) in one table:
 
 ```
 /list-cards
+```
+
+List all merchant rules (category / cleanup / exclude):
+
+```
+/list-merchantRules
 ```
 
 ## Recurring-merchant rule (a hook — describe it in words)
@@ -140,6 +153,15 @@ to apply.
 - `python3` (**3.12+** — the generator uses backslashes in f-string expressions)
 - `pdftotext -layout` (poppler-utils)
 - `node` (only for the JS syntax check during verification)
+
+## Data storage
+
+There is no database — everything is flat files. `statements/*.pdf` are the source; each is
+extracted to `.txt_cache/<name>.txt` (the **complete** raw text, nothing dropped). `data.js`
+(`window.CCDATA`) is the fully-regenerable processed dataset the dashboard reads. Because
+`.txt_cache` keeps the full text, `build_data.py` can rebuild from it even after the source PDFs
+are removed — so you can archive/delete the PDFs and still re-categorize and regenerate. All of
+these (`statements/`, `.txt_cache/`, `data.js`, reports, `dashboard.html`) are git-ignored.
 
 ## Notes
 
