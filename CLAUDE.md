@@ -38,6 +38,8 @@ python3 build_data.py     # PDFs in statements/ -> data.js + reports + dashboard
   month `MM` + closing day `DD`), then rebuild. Edits config only.
 - `/set-recurringRule <plain words>` — translate a natural-language rule into the
   `recurring_rule.js` hook body **only**. Never touches `build_data.py` / `index.html`.
+- `/list-cards` — read-only: print a table of every card (name, last 5 digits, cycle/expiry
+  `mmdd`) by merging `CCDATA.cardMeta` (from `data.js`) with per-card `mmdd` in `cards.config.json`.
 
 ## Architecture (the big picture)
 
@@ -65,6 +67,13 @@ back into `index.html`. The delivered single-file `dashboard.html` is produced b
 every card button, cycle block, and color dynamically from that payload.
 `cards.config.json` only *names/tunes* cards — it never *enables* them (unlisted cards show
 as `Card ••<last5>`).
+
+**`_default` cycle date:** a reserved `_default` key in `cards.config.json`
+(`"_default": {"mmdd": "1231"}`) is a per-user opt-in. `build()` calls `ensure_card_defaults()`
+to give any newly-detected card with no `mmdd` that fallback, then persists it back to
+`cards.config.json` (the one build-time write of that file) — idempotent, existing entries never
+overwritten. Absent `_default` = generic behavior (anchor from the card's earliest statement
+month). Reserved keys are `_`-prefixed and skipped by the `cardMeta` loop.
 
 **The recurring-merchant hook is intentionally duplicated:** the JS `window.CCRULE` in
 `recurring_rule.js` drives the **dashboard**; `build_data.py::recurring()` hardcodes the

@@ -75,8 +75,9 @@ the statement text and emits `cards`, `cardMeta`, and `reduceGroups` into `windo
 
 ## Commands
 
-Commands the user can invoke. `/update-statement` runs the build; the other two edit
-exactly one small config/hook file each — never the main `build_data.py` logic.
+Commands the user can invoke. `/update-statement` runs the build; `/set-expiryCard` and
+`/set-recurringRule` each edit exactly one small config/hook file — never the main
+`build_data.py` logic; `/list-cards` is read-only.
 
 ### `/update-statement`
 
