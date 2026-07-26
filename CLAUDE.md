@@ -120,6 +120,16 @@ N card buttons == N cards; confirm the recurring hook loads and falls back clean
 removed; confirm dedupe idempotency (duplicate a statement, rebuild, count unchanged); confirm
 no page-level horizontal scroll. Show the check results.
 
+## Commit discipline (docs before code)
+
+**Before committing any code change, update ALL affected docs in the same commit.** A commit that
+changes behavior, commands, or config without matching docs is incomplete. Concretely, sync
+whichever of these the change touches: `README.md`, this `CLAUDE.md`, `skills/credit-card-spending-dashboard/{SKILL.md,README.md}`,
+the relevant `commands/*.md`, and the command lists in `.claude-plugin/{plugin.json,marketplace.json}`.
+Bump the version in **both** manifests. Grep the docs for anything the change touched (command
+names, config filenames, version, pipeline behavior) and reconcile before `git add`. Applies to
+feature adds, reverts, and behavior changes alike.
+
 ## Answering spending questions
 
 Never guess numbers — every figure must come from the generated reports or a small script
