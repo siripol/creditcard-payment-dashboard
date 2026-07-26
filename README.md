@@ -18,9 +18,10 @@ ships with **no personal data**.
 .
 ├── .claude-plugin/plugin.json          # plugin manifest
 ├── commands/                           # slash commands
-│   ├── update-statement.md    #   /update-statement
+│   ├── update-statement.md             #   /update-statement
 │   ├── set-expiryCard.md               #   /set-expiryCard <last5> <mmdd>
-│   └── set-recurringRule.md            #   /set-recurringRule <words>
+│   ├── set-recurringRule.md            #   /set-recurringRule <words>
+│   └── list-cards.md                   #   /list-cards
 └── skills/credit-card-spending-dashboard/
     ├── SKILL.md                        # the skill (method + rules)
     ├── build_data.py                   # PDFs -> data.js + reports + dashboard.html
@@ -39,6 +40,14 @@ ships with **no personal data**.
   statement closing day. Keyed by the card's last 5 digits. e.g. `/set-expiryCard 12345 1015`.
 - **`/set-recurringRule <describe in words>`** — change what counts as a recurring merchant by
   describing it in plain language; it rewrites the `recurring_rule.js` hook only.
+- **`/list-cards`** — list every card in one table: display name, last 5 digits, and cycle/expiry
+  date (`mmdd`, decoded). Read-only.
+
+**Default cycle date for new cards.** Add a reserved `_default` key to `cards.config.json` —
+e.g. `"_default": { "mmdd": "1231" }` — and any newly-detected card with no `mmdd` inherits it
+automatically on the next build (year-end = anchor Dec, closing day 31). Existing entries are
+never overwritten; omit `_default` to keep the generic behavior (anchor from earliest statement
+month).
 
 ## Install as a plugin
 
@@ -53,7 +62,7 @@ This repo *is* the plugin (it carries both `.claude-plugin/plugin.json` and a
 /plugin install creditcard-payment-dashboard@creditcard-payment-dashboard
 ```
 
-Then reload/restart the session. The three commands below and the
+Then reload/restart the session. The four commands below and the
 `credit-card-spending-dashboard` skill become available (namespaced
 `creditcard-payment-dashboard:`).
 

@@ -65,6 +65,17 @@ Cards you don't configure still appear automatically — with a default name
 (`Card ••<last5>`) and a cycle anchor guessed from the first month seen. Colors are
 assigned automatically from a palette.
 
+Optionally set a reserved `_default` entry to give every *new* card a fixed cycle date
+instead of the guessed one:
+
+```json
+{ "_default": { "mmdd": "1231" }, "01234": { "name": "My Card", "mmdd": "1001" } }
+```
+
+On the next build, any detected card with no `mmdd` inherits `_default.mmdd` (here `1231`
+= year-end) and it's saved back to `cards.config.json`. Existing entries are never
+overwritten; omit `_default` to keep the guessed-from-first-month behavior.
+
 ### Commands
 
 Monthly update (rebuild everything from newly-added PDFs):
@@ -81,6 +92,12 @@ Set a card's cycle from chat instead of editing JSON:
 
 e.g. `/set-expiryCard 01234 1001` — upserts that card in `cards.config.json`, then
 rebuilds.
+
+List every card (name, last 5 digits, cycle/expiry `mmdd`) in one table:
+
+```
+/list-cards
+```
 
 ## Recurring-merchant rule (a hook — describe it in words)
 
