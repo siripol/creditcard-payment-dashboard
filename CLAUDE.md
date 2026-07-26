@@ -34,11 +34,11 @@ python3 build_data.py     # PDFs in statements/ -> data.js + reports + dashboard
 
 - `/update-statement` — the monthly run: build + report stats + anomaly checks +
   deliver `dashboard.html`. Command form of the "Standard update routine" in `SKILL.md`.
-- `/set-expiryCard <last5> <mmdd>` — upsert one entry in `cards.config.json` (cycle anchor
+- `/set-expiryCard <last4> <mmdd>` — upsert one entry in `cards.config.json` (cycle anchor
   month `MM` + closing day `DD`), then rebuild. Edits config only.
 - `/set-recurringRule <plain words>` — translate a natural-language rule into the
   `recurring_rule.js` hook body **only**. Never touches `build_data.py` / `index.html`.
-- `/list-cards` — read-only: print a table of every card (name, last 5 digits, cycle/expiry
+- `/list-cards` — read-only: print a table of every card (name, last 4 digits, cycle/expiry
   `mmdd`) by merging `CCDATA.cardMeta` (from `data.js`) with per-card `mmdd` in `cards.config.json`.
 
 ## Architecture (the big picture)
@@ -48,7 +48,7 @@ Pipeline in `build_data.py::build()`:
 ```
 statement PDFs
   -> pdftotext -layout (cached in .txt_cache/)
-  -> detect card = LAST 5 DIGITS (card_key) + statement month FROM TEXT CONTENT, not filename
+  -> detect card = LAST 4 DIGITS (card_key) + statement month FROM TEXT CONTENT, not filename
   -> parse rows per layout (parse_card_a / parse_card_b — EXAMPLE parsers, adapt per bank)
   -> categorise (cat) + clean merchant name (merch) from the DESCRIPTION text
   -> drop non-spending (payments/cashback/refunds/negatives), dedupe, cancel reversal pairs
@@ -66,7 +66,7 @@ back into `index.html`. The delivered single-file `dashboard.html` is produced b
 (name, cycle `anchor`, colors from `CARD_PALETTE`) + `reduceGroups`; `index.html` renders
 every card button, cycle block, and color dynamically from that payload.
 `cards.config.json` only *names/tunes* cards — it never *enables* them (unlisted cards show
-as `Card ••<last5>`).
+as `Card ••<last4>`).
 
 **`_default` cycle date:** a reserved `_default` key in `cards.config.json`
 (`"_default": {"mmdd": "1231"}`) is a per-user opt-in. `build()` calls `ensure_card_defaults()`
