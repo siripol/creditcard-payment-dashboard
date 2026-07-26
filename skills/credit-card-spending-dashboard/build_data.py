@@ -43,6 +43,34 @@ def load_card_config():
         except Exception: return {}
     return {}
 
+def save_card_config(cfg):
+    """Persist cards.config.json (git-ignored personal data). Keeps insertion order so
+    _comment / _default stay on top."""
+    with open(CARDS_CONFIG, "w", encoding="utf-8") as fh:
+        json.dump(cfg, fh, ensure_ascii=False, indent=2)
+        fh.write("\n")
+
+def _valid_mmdd(s):
+    s = str(s or "")
+    return len(s) == 4 and s.isdigit() and 1 <= int(s[:2]) <= 12
+
+def ensure_card_defaults(cfg, cards):
+    """Standing rule: any detected card with no mmdd inherits cfg['_default']['mmdd']
+    (e.g. '1231' = year-end). Preserves every existing entry -- idempotent. Returns True
+    if cfg changed. No-op when _default is absent (generic plugin behaviour)."""
+    default_mmdd = (cfg.get("_default") or {}).get("mmdd")
+    if not _valid_mmdd(default_mmdd):
+        return False
+    changed = False
+    for k in cards:
+        entry = cfg.get(k)
+        if not isinstance(entry, dict) or not _valid_mmdd(entry.get("mmdd")):
+            merged = dict(entry) if isinstance(entry, dict) else {}
+            merged["mmdd"] = default_mmdd
+            cfg[k] = merged
+            changed = True
+    return changed
+
 MON = {m: i + 1 for i, m in enumerate(
     ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'])}
 
@@ -233,6 +261,8 @@ def build():
 
     cfg = load_card_config()
     cards = sorted(set(t['card'] for t in tx))
+    if ensure_card_defaults(cfg, cards):      # standing rule: new card -> _default mmdd
+        save_card_config(cfg)
     cardMeta = {}
     for i, k in enumerate(cards):
         mmdd = str((cfg.get(k) or {}).get("mmdd", "") or "")
