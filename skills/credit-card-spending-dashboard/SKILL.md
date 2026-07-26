@@ -9,7 +9,8 @@ description: >
   answer analytical questions about their spending, add a card, or edit the categorization,
   cycle, or recurring-merchant rules. Trigger phrases: "process my statements", "update the
   spending dashboard", "how much did I spend", "add a card", "set the closing date", "change
-  what counts as a recurring shop", "/set-expiryCard", "/set-recurringRule".
+  what counts as a recurring shop", "list my cards", "/set-expiryCard", "/set-recurringRule",
+  "/list-cards".
 ---
 
 # Credit-Card Spending Dashboard
@@ -98,6 +99,20 @@ the 15th. Implementation: upsert the entry in `cards.config.json`:
 
 Then rebuild so `cardMeta.anchor` picks up the new month. (Only `MM` currently drives the
 cycle-anchor month; `DD` is stored for reference/closing-day display.)
+
+**Default for new cards (`_default`).** A reserved `_default` key in `cards.config.json` sets an
+`mmdd` fallback that `build()` applies automatically to any *newly-detected* card that has no
+`mmdd` yet — e.g. `"_default": { "mmdd": "1231" }` gives every new card a year-end cycle
+(anchor Dec, closing day 31). Existing entries are never overwritten (idempotent), and the new
+entry is persisted back to `cards.config.json` so it stays editable. If `_default` is absent, an
+unlisted card keeps the generic behaviour (anchor derived from its earliest statement month).
+
+### `/list-cards`
+
+List **every** card in one table: display name, last 5 digits, and cycle/expiry date (`mmdd`).
+Merges the detected card set from `CCDATA.cardMeta` (in `data.js`) with each card's `mmdd` from
+`cards.config.json`; cards without an `mmdd` fall back to `_default` or show `—`. `mmdd` is the
+statement-cycle date (anchor month + closing day), **not** a physical card-expiry year.
 
 ### `/set-recurringRule <describe the rule in plain words>`
 
