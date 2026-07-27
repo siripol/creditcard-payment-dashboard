@@ -10,7 +10,8 @@ description: >
   cycle, or recurring-merchant rules. Trigger phrases: "process my statements", "update the
   spending dashboard", "how much did I spend", "add a card", "set the closing date", "change
   what counts as a recurring shop", "list my cards", "rebuild the dashboard",
-  "/set-expiryCard", "/set-recurringRule", "/list-cards", "/update-dashboard".
+  "categorize a merchant", "why is this merchant Other", "/set-expiryCard", "/set-recurringRule",
+  "/list-cards", "/update-dashboard", "/set-category".
 ---
 
 # Credit-Card Spending Dashboard
@@ -77,8 +78,8 @@ the statement text and emits `cards`, `cardMeta`, and `reduceGroups` into `windo
 
 Commands the user can invoke. `/update-statement` (import new PDFs + rebuild) and
 `/update-dashboard` (re-categorize from existing statements, no new imports) both run the build;
-`/set-expiryCard` and `/set-recurringRule` each edit exactly one small config/hook file — never
-the main `build_data.py` logic; `/list-cards` is read-only.
+`/set-expiryCard`, `/set-recurringRule`, and `/set-category` each edit exactly one small
+config/hook file — never the main `build_data.py` logic; `/list-cards` is read-only.
 
 ### `/update-statement`
 
@@ -92,7 +93,7 @@ single-file `dashboard.html`, and summarize the latest month. This is the comman
 
 Re-categorize and rebuild from the **existing** statements — **no new PDFs**. Use after editing
 `cards.config.json` or the recurring rule. Same engine as `/update-statement` (each build
-re-runs `cat()`/`merch()` on every row), minus the import step; requires `statements/` (or
+re-runs `category()`/`merchant_name()` on every row), minus the import step; requires `statements/` (or
 `.txt_cache/`) to still be present, since the dashboard can't be re-categorized from `data.js`
 alone.
 
@@ -141,6 +142,25 @@ The input object `m` and its fields are documented at the top of `recurring_rule
 
 **Default rule (shipped):** paid in **≥3 consecutive months**, OR appears in **≥3 months with
 more than one charge** that month. Insurance is excluded before the rule runs.
+
+### `/set-category [<keyword> <Category>]`
+
+Fix merchants that fall into `Other`. Writes a keyword→category map into **`merchant_category.json`
+only** (git-ignored, not shipped — survives updates). `category()` applies it after `EXCLUDE`,
+before the built-in rules; a value not in `CAT_ORDER` is ignored. **Category-only — merchant names
+are never changed.** Two modes: **manual** (`/set-category MUANG THAI LIFE Insurance`), or **no
+args** → Claude reads the `Other` merchants (from the build's `UNCATEGORIZED MERCHANTS` report /
+`data.js`), proposes a category for each, and **asks the user to confirm** before writing. Rebuild
+applies it.
+
+### Instalment grouping (`merchGroup`)
+
+Instalments like `2C2P *MUANG THAI LIFE 01/03`, `02/03`, `03/03` (same shop, different งวด) are
+grouped into one merchant so per-merchant totals are correct. `merchant_group()` derives a
+`tx.merchGroup` (the name with a recognised `N/M`/`งวด`/`ผ่อน` counter and any trailing amount
+stripped) — the **raw `tx.merch` is kept untouched** (traceable). The dashboard aggregates merchants
+by `merchGroup`; the monthly tab still shows each งวด; the all-transactions tab shows both
+`ร้านค้า (ตามบิล)` and `กลุ่มร้านค้า`. Different-core merchants (e.g. `Shell` branches) never merge.
 
 > Scope note: the hook is JavaScript and drives the **dashboard**. The Markdown report's
 > recurring list uses the built-in default `3/3`. If the user wants the report to match a
@@ -215,6 +235,8 @@ Keep all identifying specifics out of the committed code:
 - **Category grouping**: which categories are essential / reducible / one-off.
 - **Recurring rule**: `recurring_rule.js` (via `/set-recurringRule`).
 - **Cycle anchor month** per card: `cards.config.json` (via `/set-expiryCard`).
+- **Merchant→category overrides**: `merchant_category.json` (via `/set-category`); git-ignored,
+  not shipped, survives plugin updates. Category-only; the build reports what's still `Other`.
 
 ---
 

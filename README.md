@@ -26,7 +26,8 @@ you delete the PDFs.
 │   ├── update-dashboard.md             #   /update-dashboard
 │   ├── set-expiryCard.md               #   /set-expiryCard <last4> <mm>
 │   ├── set-recurringRule.md            #   /set-recurringRule <words>
-│   └── list-cards.md                   #   /list-cards
+│   ├── list-cards.md                   #   /list-cards
+│   └── set-category.md                 #   /set-category [<keyword> <Category>]
 └── skills/credit-card-spending-dashboard/
     ├── SKILL.md                        # the skill (method + rules)
     ├── build_data.py                   # PDFs -> data.js + reports + dashboard.html
@@ -34,6 +35,7 @@ you delete the PDFs.
     ├── recurring_rule.js               # hook: the "recurring merchant" rule
     ├── data.sample.js                  # synthetic sample data for instant preview
     ├── cards.config.example.json       # copy -> cards.config.json and fill in
+    ├── merchant_category.example.json  # copy -> merchant_category.json (merchant -> category)
     └── vendor/                         # Chart.js (MIT) + IBM Plex Sans Thai (OFL)
 ```
 
@@ -49,6 +51,10 @@ you delete the PDFs.
   describing it in plain language; it rewrites the `recurring_rule.js` hook only.
 - **`/list-cards`** — list every card in one table: display name, last 4 digits, and cycle/expiry
   month (`mm`). Read-only.
+- **`/set-category [<keyword> <Category>]`** — map merchants stuck in `Other` to a category
+  (e.g. `MUANG THAI LIFE → Insurance`). Manual, or with no args Claude classifies the `Other`
+  merchants for you to confirm. Writes `merchant_category.json` (git-ignored, survives updates);
+  category-only, never renames a merchant.
 
 **Default cycle month for new cards.** Add a reserved `_default` key to `cards.config.json` —
 e.g. `"_default": { "mm": "12" }` — and any newly-detected card with no month inherits it

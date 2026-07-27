@@ -18,6 +18,7 @@ digits**.
 | `recurring_rule.js` | Hook: the "recurring merchant" rule (edit via `/set-recurringRule`) |
 | `data.sample.js` | Fake sample data so you can preview the dashboard immediately |
 | `cards.config.example.json` | Card config template (copy → `cards.config.json`) |
+| `merchant_category.example.json` | Merchant→category override template (copy → `merchant_category.json`) |
 | `vendor/chart.umd.js` | Chart.js (MIT) — inlined into the single-file dashboard |
 | `vendor/fonts/` | IBM Plex Sans Thai (OFL) — inlined into the single-file dashboard |
 
@@ -105,6 +106,25 @@ List every card (name, last 4 digits, cycle anchor month `mm`) in one table:
 ```
 /list-cards
 ```
+
+Categorize merchants that fall into `Other` (writes `merchant_category.json`, category-only):
+
+```
+/set-category MUANG THAI LIFE Insurance     # manual
+/set-category                                # no args -> Claude classifies, you confirm
+```
+
+## Merchant category overrides & instalment grouping
+
+- **Category overrides** — copy `merchant_category.example.json` → `merchant_category.json`
+  (git-ignored, survives updates) and map `"KEYWORD": "Category"`. `category()` applies it on top
+  of the built-in rules; an invalid category value is ignored. The build prints an
+  `UNCATEGORIZED MERCHANTS` list so you know what still needs a rule. Merchant **names are never
+  changed** — only their category.
+- **Instalment grouping** — งวด rows like `... 01/03`, `02/03` are grouped into one merchant via a
+  derived `tx.merchGroup` (counter + trailing amount stripped); the raw `tx.merch` is preserved.
+  The merchants tab and recurring list aggregate by `merchGroup`, the all-transactions tab shows
+  both `ร้านค้า (ตามบิล)` and `กลุ่มร้านค้า`, and the build reports each detected series.
 
 ## Recurring-merchant rule (a hook — describe it in words)
 

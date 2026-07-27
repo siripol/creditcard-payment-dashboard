@@ -37,10 +37,23 @@ OUT_JS     = os.environ.get("CC_OUT", os.path.join(_HERE, "data.js"))
 OUT_HTML   = os.environ.get("CC_DASH", os.path.join(_HERE, "dashboard.html"))
 VENDOR_CHARTJS = os.path.join(_HERE, "vendor", "chart.umd.js")
 CARDS_CONFIG = os.path.join(_HERE, "cards.config.json")
+MERCHANT_CATEGORY = os.path.join(_HERE, "merchant_category.json")
 CARD_PALETTE =[("#134e7a","#7ba0c4"),("#c65a2b","#e2a06f"),("#0f6e56","#6db3a0"),("#6a3d9a","#a684c7"),("#9a6a00","#d0ad5a"),("#8a1f4b","#c77394")]
 def load_card_config():
     if os.path.isfile(CARDS_CONFIG):
         try: return json.load(open(CARDS_CONFIG, encoding="utf-8"))
+        except Exception: return {}
+    return {}
+
+def load_category_overrides():
+    """Personal, update-safe merchant->category overrides (git-ignored, not shipped).
+    Flat map { "KEYWORD": "CategoryKey", ... }; keyword matched case-insensitively as a substring
+    of the raw description. `_`-prefixed keys (e.g. `_comment`) are ignored. Absent file or bad
+    JSON -> {} (pure built-in defaults)."""
+    if os.path.isfile(MERCHANT_CATEGORY):
+        try:
+            r = json.load(open(MERCHANT_CATEGORY, encoding="utf-8"))
+            return {k: v for k, v in r.items() if not k.startswith("_")} if isinstance(r, dict) else {}
         except Exception: return {}
     return {}
 
@@ -126,31 +139,36 @@ CAT_ORDER = ['Travel','Insurance','Shopping & Retail','Food & Dining',
              'Card Fees','Other']
 
 # ------------------------------------------------------------------ categorise
-def cat(d):
+def category(d, overrides=None):
     """Map a raw transaction DESCRIPTION to a spending category.
-    EXAMPLE keyword rules only -- replace the keywords in has(...) with YOUR merchants.
-    Keep EXCLUDE first so non-spending lines are dropped. Category KEYS must match
-    CAT_ORDER / TH / COLORS / GROUP in build()."""
+    Order: built-in EXCLUDE first (non-spending always dropped) -> user keyword overrides
+    (from merchant_category.json, value must be a valid CAT_ORDER key) -> built-in EXAMPLE
+    keyword rules -> 'Other'. Category KEYS must match CAT_ORDER / TH / COLORS / GROUP in build()."""
     D = d.upper()
-    def has(*ks): return any(k in D for k in ks)
-    if has('PAYMENT', 'CASHBACK', 'CASH BACK', 'REFUND', 'CR ADJUSTMENT'):  return 'EXCLUDE'
-    if has('ANNUAL FEE', 'MEMBERSHIP FEE'):                                 return 'Card Fees'
-    if has('TAXI', 'RIDE HAIL', 'TRANSIT', 'METRO', 'TOLL', 'EXPRESSWAY'):  return 'Transport & Ride-hailing'
-    if has('FUEL', 'PETROL', 'GAS STATION'):                                return 'Fuel'
-    if has('SUPERMARKET', 'GROCERY', 'CONVENIENCE STORE'):                  return 'Groceries & Convenience'
-    if has('MARKETPLACE', 'ONLINE STORE'):                                  return 'Online Shopping'
-    if has('RESTAURANT', 'CAFE', 'COFFEE', 'FOOD DELIVERY', 'DINING'):      return 'Food & Dining'
-    if has('HOSPITAL', 'CLINIC', 'PHARMACY', 'DENTAL'):                     return 'Health & Medical'
-    if has('INSURANCE', 'LIFE ASSURANCE'):                                  return 'Insurance'
-    if has('SUBSCRIPTION', 'STREAMING', 'SOFTWARE', 'ONLINE COURSE'):       return 'Subscriptions & Digital'
-    if has('ELECTRIC', 'WATER BILL', 'MOBILE', 'TELECOM', 'INTERNET'):      return 'Utilities & Telecom'
-    if has('DEPARTMENT STORE', 'RETAIL', 'CLOTHING', 'ELECTRONICS'):        return 'Shopping & Retail'
-    if has('HOTEL', 'AIRLINE', 'FLIGHT', 'CAR RENTAL', 'TOUR'):             return 'Travel'
+    def contains_any(*ks): return any(k in D for k in ks)
+    if contains_any('PAYMENT', 'CASHBACK', 'CASH BACK', 'REFUND', 'CR ADJUSTMENT'):  return 'EXCLUDE'
+    for keyword, cat_value in (overrides or {}).items():
+        if keyword and cat_value in CAT_ORDER and keyword.upper() in D:
+            return cat_value
+    if contains_any('ANNUAL FEE', 'MEMBERSHIP FEE'):                                 return 'Card Fees'
+    if contains_any('TAXI', 'RIDE HAIL', 'TRANSIT', 'METRO', 'TOLL', 'EXPRESSWAY'):  return 'Transport & Ride-hailing'
+    if contains_any('FUEL', 'PETROL', 'GAS STATION'):                                return 'Fuel'
+    if contains_any('SUPERMARKET', 'GROCERY', 'CONVENIENCE STORE'):                  return 'Groceries & Convenience'
+    if contains_any('MARKETPLACE', 'ONLINE STORE'):                                  return 'Online Shopping'
+    if contains_any('RESTAURANT', 'CAFE', 'COFFEE', 'FOOD DELIVERY', 'DINING'):      return 'Food & Dining'
+    if contains_any('HOSPITAL', 'CLINIC', 'PHARMACY', 'DENTAL'):                     return 'Health & Medical'
+    if contains_any('INSURANCE', 'LIFE ASSURANCE'):                                  return 'Insurance'
+    if contains_any('SUBSCRIPTION', 'STREAMING', 'SOFTWARE', 'ONLINE COURSE'):       return 'Subscriptions & Digital'
+    if contains_any('ELECTRIC', 'WATER BILL', 'MOBILE', 'TELECOM', 'INTERNET'):      return 'Utilities & Telecom'
+    if contains_any('DEPARTMENT STORE', 'RETAIL', 'CLOTHING', 'ELECTRONICS'):        return 'Shopping & Retail'
+    if contains_any('HOTEL', 'AIRLINE', 'FLIGHT', 'CAR RENTAL', 'TOUR'):             return 'Travel'
     return 'Other'
 
 # ------------------------------------------------------------------ merchant
-def merch(d):
-    """Turn a raw description into a clean display name. EXAMPLE rules only."""
+def merchant_name(d):
+    """Turn a raw description into a clean display name. EXAMPLE rules only.
+    Preserves the statement text (only trims trailing whitespace runs); does NOT strip
+    instalment counters -- that grouping lives in merchant_group() / the tx 'merchGroup' field."""
     D = d.upper()
     rules = [
         ('SUPERMARKET', 'Supermarket'),
@@ -164,8 +182,64 @@ def merch(d):
     n = re.sub(r'\s{2,}.*$', '', d).strip()
     return n.title() if n.isupper() else n
 
+# Instalment counter patterns stripped to find the merchant "core" (for grouping only).
+# Keep this list in one place so it is easy to extend to new formats.
+_INSTALMENT_PATTERNS = [
+    # keyword form first, so "งวด 2/12" is peeled as a whole (number optional)
+    r'(?:งวดที่|งวด|ผ่อน|INSTALLMENT|INSTALMENT|INST)(?:\s*\d{1,3}(?:\s*/\s*\d{1,3})?)?',
+    r'\(?\d{1,3}\s*/\s*\d{1,3}\)?',                 # 01/10 , 1/10 , (1/10)
+]
+_TRAIL_AMOUNT = r'[\d,]+\.\d{2}'   # a trailing amount the parser may have left in the name
+
+def merchant_group(name):
+    """Grouping key for a merchant: the display name with a trailing instalment counter (and a
+    trailing amount the parser may have left in) removed, so all งวด of one series share a core.
+    Returns the name unchanged when no counter is present (non-instalment rows group by themselves)."""
+    s = name.strip()
+    changed = True
+    # peel a trailing amount and/or counter (in any order) off the end, repeatedly
+    while changed:
+        changed = False
+        m = re.search(r'\s+' + _TRAIL_AMOUNT + r'$', s)
+        if m:
+            s = s[:m.start()].rstrip(); changed = True
+        for pat in _INSTALMENT_PATTERNS:
+            m = re.search(r'\s+' + pat + r'$', s, flags=re.IGNORECASE)
+            if m:
+                s = s[:m.start()].rstrip(); changed = True
+    return s or name.strip()
+
+def uncategorized_merchants(tx, top=15):
+    """Distinct merchant groups still landing in 'Other', ranked by total amount, so the user
+    knows what to add via /set-category. Returns [(merchGroup, total, count), ...]."""
+    agg = {}
+    for t in tx:
+        if t['cat'] == 'Other':
+            g = t.get('merchGroup') or t['merch']
+            a = agg.setdefault(g, [0.0, 0])
+            a[0] += t['amt']; a[1] += 1
+    return sorted(((g, v[0], v[1]) for g, v in agg.items()), key=lambda x: -x[1])[:top]
+
+def instalment_series(tx):
+    """Detect real instalment series: a merchGroup (where the counter was actually stripped, i.e.
+    merchGroup != merch for its rows) with >=2 rows of EQUAL per-instalment amount. Returns
+    [(merchGroup, amount, count), ...] — the amount check is what confirms a genuine series."""
+    byGroup = {}
+    for t in tx:
+        if t.get('merchGroup') and t['merchGroup'] != t['merch']:
+            byGroup.setdefault(t['merchGroup'], []).append(round(t['amt'], 2))
+    out = []
+    for g, amts in byGroup.items():
+        counts = {}
+        for a in amts:
+            counts[a] = counts.get(a, 0) + 1
+        for a, n in counts.items():
+            if n >= 2:
+                out.append((g, a, n))
+    return sorted(out, key=lambda x: -(x[1] * x[2]))
+
 # ------------------------------------------------------------------ parse
-def card_key(txt):
+def detect_card_key(txt):
     """Return the card identifier = LAST 4 DIGITS of the card number shown on the statement.
     Statements usually print a masked PAN like '1234-56XX-XXXX-0135'. ADAPT this regex.
     Falls back to 'UNKNOWN' if not found (configure it in cards.config.json)."""
@@ -180,7 +254,7 @@ def parse_card_a(path):
     """EXAMPLE parser for one card's statement layout. ADAPT regexes to your
     `pdftotext -layout` output. Return dicts(card=..., stmt='YYYY-MM',
     date='YYYY-MM-DD', desc=str, amt=float). Negative amt = credit/refund.
-    The 'card' value is overwritten with card_key() in build()."""
+    The 'card' value is overwritten with detect_card_key() in build()."""
     txt = open(path, encoding='utf-8', errors='ignore').read()
     m = re.search(r'STATEMENT DATE\s+(\d{1,2}) (\w{3}) (\d{4})', txt)
     if not m:
@@ -256,15 +330,16 @@ def build():
     rows = []
     for txt in txts:
         recs = parse_card_a(txt) or parse_card_b(txt)  # adapt routing to your files
-        key = card_key(open(txt, encoding='utf-8', errors='ignore').read())
+        key = detect_card_key(open(txt, encoding='utf-8', errors='ignore').read())
         for r in recs:
             r['card'] = key
         rows += recs
 
-    # categorise
+    # categorise (built-in rules + update-safe user category overrides from merchant_category.json)
+    overrides = load_category_overrides()
     for r in rows:
-        r['cat'] = cat(r['desc'])
-        r['merch'] = merch(r['desc'])
+        r['cat'] = category(r['desc'], overrides)
+        r['merch'] = merchant_name(r['desc'])
 
     raw_n = len(rows)
 
@@ -285,7 +360,8 @@ def build():
                 if i not in drop and r['cat'] != 'EXCLUDE' and r['amt'] > 0]
 
     tx = [dict(d=r['date'], m=r['stmt'], card=r['card'], cat=r['cat'],
-               merch=r['merch'], desc=re.sub(r'\s{2,}', ' ', r['desc'])[:48],
+               merch=r['merch'], merchGroup=merchant_group(r['merch']),
+               desc=re.sub(r'\s{2,}', ' ', r['desc'])[:48],
                amt=round(r['amt'], 2)) for r in expenses]
     tx.sort(key=lambda t: (t['d'], -t['amt']))
 
@@ -336,6 +412,18 @@ def build():
     print(f"files={len(built_from)}  raw_lines={raw_n}  duplicates_removed={dup_removed}  "
           f"reversal_pairs={pairs}  final_expenses={len(tx)}")
     print(f"wrote {OUT_JS}  ({os.path.getsize(OUT_JS):,} bytes)")
+
+    series = instalment_series(tx)
+    if series:
+        print("\nINSTALMENT SERIES DETECTED (grouped into one merchant each):")
+        for g, amt, n in series:
+            print(f"  {g}  —  {amt:,.2f} ×{n}")
+
+    other = uncategorized_merchants(tx)
+    if other:
+        print("\nUNCATEGORIZED MERCHANTS (still 'Other' — set with /set-category):")
+        for g, total, n in other:
+            print(f"  {total:>12,.2f}  ({n:>2}×)  {g}")
     return payload
 
 
