@@ -96,33 +96,33 @@ re-runs `cat()`/`merch()` on every row), minus the import step; requires `statem
 `.txt_cache/`) to still be present, since the dashboard can't be re-categorized from `data.js`
 alone.
 
-### `/set-expiryCard <last4> <mmdd>`
+### `/set-expiryCard <last4> <mm>`
 
-Set a card's **cycle closing date**. `<last4>` = the last 4 digits of the card. `<mmdd>` =
-`MM` (the month the accumulation cycle anchors on) + `DD` (the statement closing day).
-Example: `/set-expiryCard 1234 1015` → card ••1234, cycle anchors in October, closes on
-the 15th. Implementation: upsert the entry in `cards.config.json`:
+Set a card's **cycle anchor month**. `<last4>` = the last 4 digits of the card. `<mm>` = `MM`,
+the month the accumulation cycle anchors on (`01`–`12`).
+Example: `/set-expiryCard 1234 10` → card ••1234, cycle anchors in October. Implementation:
+upsert the entry in `cards.config.json`:
 
 ```json
-{ "1234": { "name": "My Travel Card", "mmdd": "1015" } }
+{ "1234": { "name": "My Travel Card", "mm": "10" } }
 ```
 
-Then rebuild so `cardMeta.anchor` picks up the new month. (Only `MM` currently drives the
-cycle-anchor month; `DD` is stored for reference/closing-day display.)
+Then rebuild so `cardMeta.anchor` picks up the month. (A legacy `"mmdd"` value still works — the
+build reads its leading `MM`.)
 
 **Default for new cards (`_default`).** A reserved `_default` key in `cards.config.json` sets an
-`mmdd` fallback that `build()` applies automatically to any *newly-detected* card that has no
-`mmdd` yet — e.g. `"_default": { "mmdd": "1231" }` gives every new card a year-end cycle
-(anchor Dec, closing day 31). Existing entries are never overwritten (idempotent), and the new
-entry is persisted back to `cards.config.json` so it stays editable. If `_default` is absent, an
-unlisted card keeps the generic behaviour (anchor derived from its earliest statement month).
+`mm` fallback that `build()` applies automatically to any *newly-detected* card that has no
+cycle month yet — e.g. `"_default": { "mm": "12" }` gives every new card a December anchor.
+Existing entries are never overwritten (idempotent), and the new entry is persisted back to
+`cards.config.json` so it stays editable. If `_default` is absent, an unlisted card keeps the
+generic behaviour (anchor derived from its earliest statement month).
 
 ### `/list-cards`
 
-List **every** card in one table: display name, last 4 digits, and cycle/expiry date (`mmdd`).
-Merges the detected card set from `CCDATA.cardMeta` (in `data.js`) with each card's `mmdd` from
-`cards.config.json`; cards without an `mmdd` fall back to `_default` or show `—`. `mmdd` is the
-statement-cycle date (anchor month + closing day), **not** a physical card-expiry year.
+List **every** card in one table: display name, last 4 digits, and cycle anchor month (`mm`).
+Merges the detected card set from `CCDATA.cardMeta` (in `data.js`) with each card's `mm` from
+`cards.config.json`; cards without a month fall back to `_default` or show `—`. `mm` is the
+cycle anchor month, **not** a physical card-expiry year.
 
 ### `/set-recurringRule <describe the rule in plain words>`
 
@@ -192,8 +192,8 @@ These keep the numbers correct and reproducible. Do not weaken them.
 - **Recurring merchant** = whatever `recurring_rule.js` returns (default: ≥3 consecutive
   months **or** ≥3 months with >1 charge). Insurance excluded.
 - **Cycle accumulation** = per card, from its anchor month forward; **independent of the
-  dashboard's month-range filter**. Anchor comes from `cards.config.json` `mmdd` (MM), else
-  the earliest month seen.
+  dashboard's month-range filter**. Anchor comes from `cards.config.json` `mm` (or a legacy
+  `mmdd`'s leading MM), else the earliest month seen.
 - **Average per month** = total ÷ number of months that actually have transactions.
 - **Reducible group** = categories grouped as `reduce` (surfaced as `reduceGroups`).
 - **Estimated saving** = reducible total × a fixed percentage. Label it an estimate, not
@@ -214,7 +214,7 @@ Keep all identifying specifics out of the committed code:
 - **Merchant name cleanup**: raw-description → display-name mappings (user-supplied).
 - **Category grouping**: which categories are essential / reducible / one-off.
 - **Recurring rule**: `recurring_rule.js` (via `/set-recurringRule`).
-- **Cycle anchor / closing day** per card: `cards.config.json` (via `/set-expiryCard`).
+- **Cycle anchor month** per card: `cards.config.json` (via `/set-expiryCard`).
 
 ---
 

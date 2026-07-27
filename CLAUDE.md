@@ -37,12 +37,12 @@ python3 build_data.py     # PDFs in statements/ -> data.js + reports + dashboard
 - `/update-dashboard` — re-categorize + rebuild from existing statements, **no new PDFs**.
   Same `build_data.py` engine (each build re-runs `cat()`/`merch()` and re-reads
   `cards.config.json` / `recurring_rule.js`); needs `statements/` or `.txt_cache/` present.
-- `/set-expiryCard <last4> <mmdd>` — upsert one entry in `cards.config.json` (cycle anchor
-  month `MM` + closing day `DD`), then rebuild. Edits config only.
+- `/set-expiryCard <last4> <mm>` — upsert one entry in `cards.config.json` (cycle anchor
+  month `MM`, `01`–`12`), then rebuild. Edits config only.
 - `/set-recurringRule <plain words>` — translate a natural-language rule into the
   `recurring_rule.js` hook body **only**. Never touches `build_data.py` / `index.html`.
 - `/list-cards` — read-only: print a table of every card (name, last 4 digits, cycle/expiry
-  `mmdd`) by merging `CCDATA.cardMeta` (from `data.js`) with per-card `mmdd` in `cards.config.json`.
+  `mm`) by merging `CCDATA.cardMeta` (from `data.js`) with per-card `mm` in `cards.config.json`.
 
 ## Architecture (the big picture)
 
@@ -78,9 +78,9 @@ every card button, cycle block, and color dynamically from that payload.
 `cards.config.json` only *names/tunes* cards — it never *enables* them (unlisted cards show
 as `Card ••<last4>`).
 
-**`_default` cycle date:** a reserved `_default` key in `cards.config.json`
-(`"_default": {"mmdd": "1231"}`) is a per-user opt-in. `build()` calls `ensure_card_defaults()`
-to give any newly-detected card with no `mmdd` that fallback, then persists it back to
+**`_default` cycle month:** a reserved `_default` key in `cards.config.json`
+(`"_default": {"mm": "12"}`) is a per-user opt-in. `build()` calls `ensure_card_defaults()`
+to give any newly-detected card with no cycle month that fallback, then persists it back to
 `cards.config.json` (the one build-time write of that file) — idempotent, existing entries never
 overwritten. Absent `_default` = generic behavior (anchor from the card's earliest statement
 month). Reserved keys are `_`-prefixed and skipped by the `cardMeta` loop.
