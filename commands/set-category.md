@@ -1,6 +1,6 @@
 ---
-description: Set the spending category for merchants that land in "Other" — type the mapping yourself, or let Claude classify them.
-argument-hint: [<merchant keyword> <Category>]  |  (no args = classify the Other merchants)
+description: Set the spending category for merchants that land in Other — type the mapping yourself, or let Claude classify them.
+argument-hint: <merchant keyword> <Category>  (or no args to auto-classify)
 ---
 
 Fix merchants that fall into `Other` by mapping a keyword to a category. Rules are written to
