@@ -35,8 +35,13 @@ python3 build_data.py     # PDFs in statements/ -> data.js + reports + dashboard
 - `/update-statement` — the monthly run: build + report stats + anomaly checks +
   deliver `dashboard.html`. Command form of the "Standard update routine" in `SKILL.md`.
 - `/update-dashboard` — re-categorize + rebuild from existing statements, **no new PDFs**.
-  Same `build_data.py` engine (each build re-runs `cat()`/`merch()` and re-reads
-  `cards.config.json` / `recurring_rule.js`); needs `statements/` or `.txt_cache/` present.
+  Same `build_data.py` engine (each build re-runs `category()`/`merchant_name()` and re-reads
+  `cards.config.json` / `merchant_category.json` / `recurring_rule.js`); needs `statements/` or
+  `.txt_cache/` present.
+- `/set-category [<keyword> <Category>]` — map merchants stuck in `Other` to a category. Writes
+  `merchant_category.json` **only** (git-ignored, not shipped). Manual (`<keyword> <Category>`) or,
+  with no args, Claude classifies the `Other` merchants (with a confirm step). Category-only —
+  never renames a merchant.
 - `/set-expiryCard <last4> <mm>` — upsert one entry in `cards.config.json` (cycle anchor
   month `MM`, `01`–`12`), then rebuild. Edits config only.
 - `/set-recurringRule <plain words>` — translate a natural-language rule into the
@@ -53,9 +58,10 @@ statement PDFs
   -> pdftotext -layout (cached in .txt_cache/)   [no PDFs? build from .txt_cache directly]
   -> detect card = LAST 4 DIGITS (card_key) + statement month FROM TEXT CONTENT, not filename
   -> parse rows per layout (parse_card_a / parse_card_b — EXAMPLE parsers, adapt per bank)
-  -> categorise (cat) + clean merchant name (merch) from the DESCRIPTION text
+  -> categorise (category(), + user overrides from merchant_category.json) + clean merchant name
+     (merchant_name()) + grouping key (merchant_group() -> tx.merchGroup) from the DESCRIPTION text
   -> drop non-spending (payments/cashback/refunds/negatives), dedupe, cancel reversal pairs
-  -> write data.js  (window.CCDATA = {tx, cards, cardMeta, reduceGroups, catOrder, ...})
+  -> write data.js  (window.CCDATA = {tx:[{d,m,card,cat,merch,merchGroup,desc,amt}], cards, cardMeta, ...})
   -> write spending_report.md + monthly_brief.md
   -> assemble dashboard.html (inline chart.umd.js + CCDATA + base64 fonts + recurring_rule.js)
 ```
@@ -91,14 +97,31 @@ default `maxRun>=3 || multi>=3` for the **Markdown report**. `/set-recurringRule
 the JS hook — the report stays on the default unless the user explicitly asks to mirror it in
 `recurring()`. Insurance is excluded before either rule runs.
 
-**Per-bank adaptation points** (marked as generic EXAMPLES in `build_data.py`): `card_key()`
-regex, `parse_card_a` / `parse_card_b` layouts + their routing in `build()`, the `cat()`
-keyword→category map, and `merch()` name cleanup. Category keys must stay consistent across
-`cat()`, `CAT_ORDER` (module-level), `TH`, `COLORS`, `GROUP`.
+**Per-bank adaptation points** (marked as generic EXAMPLES in `build_data.py`): `detect_card_key()`
+regex, `parse_card_a` / `parse_card_b` layouts + their routing in `build()`, the `category()`
+keyword→category map, and `merchant_name()` name cleanup. Category keys must stay consistent across
+`category()`, `CAT_ORDER` (module-level), `TH`, `COLORS`, `GROUP`.
+
+**Category overrides (update-safe):** `category()` takes a keyword→category map from
+`merchant_category.json` (`load_category_overrides()`, git-ignored, ships only
+`merchant_category.example.json`). Applied after `EXCLUDE`, before the built-in rules; a value not
+in `CAT_ORDER` is ignored. Category-only — never renames a merchant. Set via `/set-category`. The
+build prints an `UNCATEGORIZED MERCHANTS` report so the user knows what still needs mapping.
+
+**Instalment grouping (`tx.merchGroup`):** `merchant_group()` strips a recognised instalment counter
+(`N/M` + `งวด`/`ผ่อน`/`INSTALLMENT` variants, and a trailing amount the parser may have left in) so
+all งวด of a series share a core; `merchant_name()` output (`tx.merch`) is left untouched. Merge is
+by identical core only (different cores like `Shell` branches never merge). `index.html` aggregates
+merchants by `merchGroup` (`agg()`), drill-down shows the original `merch`; the all-transactions tab
+has both `ร้านค้า (ตามบิล)` and `กลุ่มร้านค้า` columns. The build reports each detected series
+(≥2 `N/M` rows of equal amount).
 
 ## Data-integrity rules (non-negotiable — never weaken)
 
 - Count real spending only; exclude payments, cashback, credit adjustments, refunds, negatives.
+- **Never overwrite a statement-sourced value; derive into a new field so the original is
+  traceable.** e.g. instalment grouping keeps the raw `tx.merch` and adds `tx.merchGroup`; the
+  dashboard aggregates by the derived field but the drill-down shows the original.
 - Remove matched reversal pairs: opposite-sign entries on same `card`+`amount` with a
   **normalized** description (leading `REVERSAL`/`VOID`/`ยกเลิก`/… stripped, so `REVERSAL X`
   pairs with `X`). Two-pass: same transaction date first, then any date for leftovers. This is

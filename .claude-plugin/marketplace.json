@@ -7,8 +7,8 @@
     {
       "name": "creditcard-payment-dashboard",
       "source": "./",
-      "version": "0.7.2",
-      "description": "Turn monthly credit-card statement PDFs into one self-contained offline dashboard.html plus Markdown reports. Card-count-agnostic; ships no personal data. Commands: /update-statement, /update-dashboard, /set-expiryCard, /set-recurringRule, /list-cards."
+      "version": "0.8.0",
+      "description": "Turn monthly credit-card statement PDFs into one self-contained offline dashboard.html plus Markdown reports. Card-count-agnostic; ships no personal data. Commands: /update-statement, /update-dashboard, /set-expiryCard, /set-recurringRule, /list-cards, /set-category."
     }
   ]
 }

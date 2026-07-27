@@ -221,7 +221,8 @@ function agg(txs){
     cat[t.cat]=(cat[t.cat]||0)+t.amt;
     mon[t.m]=(mon[t.m]||0)+t.amt;
     (byCardMon[t.card]||(byCardMon[t.card]={}));byCardMon[t.card][t.m]=(byCardMon[t.card][t.m]||0)+t.amt;
-    const M=merch[t.merch]||(merch[t.merch]={total:0,n:0,cat:t.cat,months:{},cards:new Set(),tx:[]});
+    const gkey=t.merchGroup||t.merch;   // group instalments under one merchant (raw name kept on each tx)
+    const M=merch[gkey]||(merch[gkey]={total:0,n:0,cat:t.cat,months:{},cards:new Set(),tx:[]});
     M.total+=t.amt;M.n++;M.months[t.m]=(M.months[t.m]||0)+t.amt;M.cards.add(t.card);M.tx.push(t);
     total+=t.amt;
   }
@@ -671,7 +672,7 @@ function allFiltered(){
   if(AS.month!=='ALL')list=list.filter(t=>t.m===AS.month);
   if(AS.cat!=='ALL')list=list.filter(t=>t.cat===AS.cat);
   if(AS.q)list=list.filter(t=>(t.merch+' '+t.desc+' '+TH[t.cat]).toLowerCase().includes(AS.q));
-  const val={m:t=>t.m,card:t=>cardName(t.card),cat:t=>TH[t.cat],merch:t=>t.merch,desc:t=>t.desc,amt:t=>t.amt}[AS.sortKey]||(t=>t.m);
+  const val={m:t=>t.m,card:t=>cardName(t.card),cat:t=>TH[t.cat],merch:t=>t.merch,merchGroup:t=>t.merchGroup||t.merch,desc:t=>t.desc,amt:t=>t.amt}[AS.sortKey]||(t=>t.m);
   list.sort((a,b)=>{const va=val(a),vb=val(b);const r=(typeof va==='number'&&typeof vb==='number')?va-vb:String(va).localeCompare(String(vb),'th');return AS.sortDir*r || (b.amt-a.amt);});
   return list;
 }
@@ -682,8 +683,8 @@ function drawAll(){
   document.getElementById('aSummary').textContent=`พบ ${list.length.toLocaleString()} รายการ · ยอดรวม ${fmt(tot)}`;
   const slice=list.slice((AS.page-1)*per,AS.page*per);
   const sA=(k,label,cls)=>`<th class="sortable ${cls||''} ${AS.sortKey===k?'act':''}" data-k="${k}">${label} <span class="ar">${AS.sortKey===k?(AS.sortDir<0?'▼':'▲'):'⇅'}</span></th>`;
-  let h='<thead><tr>'+sA('m','เดือน')+sA('card','บัตร')+sA('cat','ประเภท')+sA('merch','ร้านค้า')+sA('desc','รายละเอียด')+sA('amt','จำนวนเงิน','tt')+'</tr></thead><tbody>';
-  h+=slice.map(t=>`<tr><td>${MTH[t.m]}</td><td class="tl">${cardName(t.card)}</td><td class="tl"><span class="dot" style="background:${CO[t.cat]}"></span>${TH[t.cat]}</td><td class="tl">${t.merch}</td><td class="tl" style="white-space:normal">${t.desc}</td><td class="tt">${fmt(t.amt)}</td></tr>`).join('');
+  let h='<thead><tr>'+sA('m','เดือน')+sA('card','บัตร')+sA('cat','ประเภท')+sA('merch','ร้านค้า (ตามบิล)')+sA('merchGroup','กลุ่มร้านค้า')+sA('desc','รายละเอียด')+sA('amt','จำนวนเงิน','tt')+'</tr></thead><tbody>';
+  h+=slice.map(t=>`<tr><td>${MTH[t.m]}</td><td class="tl">${cardName(t.card)}</td><td class="tl"><span class="dot" style="background:${CO[t.cat]}"></span>${TH[t.cat]}</td><td class="tl">${t.merch}</td><td class="tl">${t.merchGroup||t.merch}</td><td class="tl" style="white-space:normal">${t.desc}</td><td class="tt">${fmt(t.amt)}</td></tr>`).join('');
   h+='</tbody>';document.getElementById('aTable').innerHTML=h;
   document.querySelectorAll('#aTable th.sortable').forEach(th=>th.addEventListener('click',()=>{const k=th.dataset.k;if(AS.sortKey===k)AS.sortDir=-AS.sortDir;else{AS.sortKey=k;AS.sortDir=(k==='amt'?-1:1);}AS.page=1;drawAll();}));
   document.getElementById('aPager').innerHTML=`<button ${AS.page<=1?'disabled':''} id="pprev">‹ ก่อนหน้า</button><span>หน้า ${AS.page} / ${pages}</span><button ${AS.page>=pages?'disabled':''} id="pnext">ถัดไป ›</button>`;
@@ -694,8 +695,8 @@ function drawAll(){
 function exportCSV(){
   const list=allFiltered();
   const esc=s=>'"'+String(s).replace(/"/g,'""')+'"';
-  const rows=[['เดือน','บัตร','ประเภท','ร้านค้า','รายละเอียด','จำนวนเงิน']];
-  list.forEach(t=>rows.push([MTH[t.m],cardName(t.card),TH[t.cat],t.merch,t.desc,t.amt]));
+  const rows=[['เดือน','บัตร','ประเภท','ร้านค้า (ตามบิล)','กลุ่มร้านค้า','รายละเอียด','จำนวนเงิน']];
+  list.forEach(t=>rows.push([MTH[t.m],cardName(t.card),TH[t.cat],t.merch,t.merchGroup||t.merch,t.desc,t.amt]));
   const csv='\uFEFF'+rows.map(r=>r.map(esc).join(',')).join('\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download='transactions.csv';a.click();URL.revokeObjectURL(url);
