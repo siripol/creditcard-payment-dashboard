@@ -1,0 +1,13 @@
+# personal data — never commit
+statements/
+data.js
+dashboard.html
+report.md
+brief.md
+spending_report.md
+monthly_brief.md
+.txt_cache/
+cards.config.json
+# python
+__pycache__/
+*.pyc

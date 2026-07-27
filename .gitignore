@@ -1,0 +1,33 @@
+# ---- personal data — never commit ----
+statements/
+**/statements/
+sampleData/
+**/sampleData/
+cards.config.json
+**/cards.config.json
+merchant_category.json
+**/merchant_category.json
+merchant_group.json
+**/merchant_group.json
+data.js
+**/data.js
+dashboard.html
+**/dashboard.html
+report.md
+brief.md
+spending_report.md
+monthly_brief.md
+.txt_cache/
+**/.txt_cache/
+
+# ---- python ----
+__pycache__/
+**/__pycache__/
+*.pyc
+
+# ---- os / editor ----
+.DS_Store
+Thumbs.db
+
+# ---- local claude session data ----
+.claude/

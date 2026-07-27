@@ -1,0 +1,13 @@
+{
+  "_comment": "Copy this file to merchant_category.json and edit locally. It is git-ignored and NOT shipped with the plugin, so it survives plugin updates (unlike editing build_data.py). Each entry maps a KEYWORD -> a spending category, matched case-insensitively as a substring of the raw statement description. The category value MUST be one of: Travel, Insurance, Shopping & Retail, Food & Dining, Subscriptions & Digital, Groceries & Convenience, Transport & Ride-hailing, Online Shopping, Health & Medical, Utilities & Telecom, Fuel, Card Fees, Other (an invalid value is ignored). Only categorization is affected — merchant display names are never changed. Payments/cashback/refunds are always excluded first. You can also set entries in plain words with /set-category (or bulk-classify everything not pinned here with /auto-categorize), and see what still needs categorizing with the build's 'UNCATEGORIZED MERCHANTS' report.",
+  "_source_comment": "Optional provenance: _source maps each KEYWORD to who set it — 'user' (you set it, treated as pinned/locked) or 'llm' (Claude classified it). /set-category and /auto-categorize maintain this; /list-category shows it. _-prefixed keys are ignored by the build. /auto-categorize never re-classifies a merchant whose keyword is already present here.",
+  "_source": {
+    "EXAMPLE INSURANCE": "user",
+    "EXAMPLE MALL": "llm"
+  },
+  "EXAMPLE INSURANCE": "Insurance",
+  "EXAMPLE MALL": "Shopping & Retail",
+  "EXAMPLE RIDES": "Transport & Ride-hailing",
+  "EXAMPLE ONLINE": "Online Shopping",
+  "EXAMPLE MART": "Groceries & Convenience"
+}

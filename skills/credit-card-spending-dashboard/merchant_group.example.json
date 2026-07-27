@@ -1,0 +1,7 @@
+{
+  "_comment": "Copy this file to merchant_group.json and edit locally. It is git-ignored and NOT shipped with the plugin, so it survives plugin updates (unlike editing build_data.py). Each entry maps a REGEX pattern -> a canonical merchant-group display name. The FIRST entry whose regex matches a merchant's display name wins (order matters), so put more specific patterns first. Matching is case-insensitive. This collapses varying-token merchants (e.g. 'ExampleSub*AB12CD34 CITY', 'ExampleSub*EF56GH78 CITY') into one group. This is USER-CURATED grouping (not automatic prefix collapse, which was reverted in v0.7.0 for producing wrong data) — always confirm the pattern's matches before writing. Only the derived merchGroup key changes; the raw statement merchant name (tx.merch) is never renamed. Set/rename entries in plain words with /set-merchantGroup.",
+  "groups": [
+    { "pattern": "ExampleSub\\*\\w+ CITY", "group": "Example Subscription" },
+    { "pattern": "ExampleShop\\*\\w+", "group": "Example Shop" }
+  ]
+}
