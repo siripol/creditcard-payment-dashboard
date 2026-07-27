@@ -51,23 +51,34 @@ def save_card_config(cfg):
         json.dump(cfg, fh, ensure_ascii=False, indent=2)
         fh.write("\n")
 
-def _valid_mmdd(s):
+def _month_of(s):
+    """Cycle anchor month (1-12) from a card's 'mm' value, or None. Accepts the legacy
+    'mmdd' form too (uses the leading MM), so old configs keep working."""
     s = str(s or "")
-    return len(s) == 4 and s.isdigit() and 1 <= int(s[:2]) <= 12
+    if len(s) >= 2 and s[:2].isdigit() and 1 <= int(s[:2]) <= 12:
+        return int(s[:2])
+    return None
+
+def _card_month(entry):
+    """Read a card entry's cycle month from 'mm' (preferred) or legacy 'mmdd'."""
+    if not isinstance(entry, dict):
+        return None
+    return _month_of(entry.get("mm") or entry.get("mmdd"))
 
 def ensure_card_defaults(cfg, cards):
-    """Standing rule: any detected card with no mmdd inherits cfg['_default']['mmdd']
-    (e.g. '1231' = year-end). Preserves every existing entry -- idempotent. Returns True
-    if cfg changed. No-op when _default is absent (generic plugin behaviour)."""
-    default_mmdd = (cfg.get("_default") or {}).get("mmdd")
-    if not _valid_mmdd(default_mmdd):
+    """Standing rule: any detected card with no cycle month inherits cfg['_default']['mm']
+    (e.g. '12' = December). Preserves every existing entry -- idempotent. Returns True if cfg
+    changed. No-op when _default is absent. Legacy 'mmdd' values are still honoured."""
+    m = _card_month(cfg.get("_default"))
+    if m is None:
         return False
+    default_mm = f"{m:02d}"
     changed = False
     for k in cards:
         entry = cfg.get(k)
-        if not isinstance(entry, dict) or not _valid_mmdd(entry.get("mmdd")):
+        if _card_month(entry) is None:
             merged = dict(entry) if isinstance(entry, dict) else {}
-            merged["mmdd"] = default_mmdd
+            merged["mm"] = default_mm
             cfg[k] = merged
             changed = True
     return changed
@@ -298,14 +309,12 @@ def build():
 
     cfg = load_card_config()
     cards = sorted(set(t['card'] for t in tx))
-    if ensure_card_defaults(cfg, cards):      # standing rule: new card -> _default mmdd
+    if ensure_card_defaults(cfg, cards):      # standing rule: new card -> _default mm
         save_card_config(cfg)
     cardMeta = {}
     for i, k in enumerate(cards):
-        mmdd = str((cfg.get(k) or {}).get("mmdd", "") or "")
-        if len(mmdd) >= 2 and mmdd[:2].isdigit() and 1 <= int(mmdd[:2]) <= 12:
-            anchor = int(mmdd[:2])
-        else:
+        anchor = _card_month(cfg.get(k))      # from 'mm' (or legacy 'mmdd')
+        if anchor is None:
             mset = sorted({t['m'] for t in tx if t['card'] == k})
             anchor = int(mset[0][5:7]) if mset else 1
         col, bar = CARD_PALETTE[i % len(CARD_PALETTE)]

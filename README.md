@@ -24,7 +24,7 @@ you delete the PDFs.
 ├── commands/                           # slash commands
 │   ├── update-statement.md             #   /update-statement
 │   ├── update-dashboard.md             #   /update-dashboard
-│   ├── set-expiryCard.md               #   /set-expiryCard <last4> <mmdd>
+│   ├── set-expiryCard.md               #   /set-expiryCard <last4> <mm>
 │   ├── set-recurringRule.md            #   /set-recurringRule <words>
 │   └── list-cards.md                   #   /list-cards
 └── skills/credit-card-spending-dashboard/
@@ -43,18 +43,17 @@ you delete the PDFs.
   `data.js`, the reports, and the offline `dashboard.html`, with build stats and anomaly checks.
 - **`/update-dashboard`** — re-categorize and rebuild the dashboard from the existing
   statements, **without** importing new PDFs. Use after changing a card/recurring rule.
-- **`/set-expiryCard <last4> <mmdd>`** — set a card's cycle: `MM` = cycle anchor month, `DD` =
-  statement closing day. Keyed by the card's last 4 digits. e.g. `/set-expiryCard 1234 1015`.
+- **`/set-expiryCard <last4> <mm>`** — set a card's cycle anchor month (`MM`, `01`–`12`).
+  Keyed by the card's last 4 digits. e.g. `/set-expiryCard 1234 10`.
 - **`/set-recurringRule <describe in words>`** — change what counts as a recurring merchant by
   describing it in plain language; it rewrites the `recurring_rule.js` hook only.
 - **`/list-cards`** — list every card in one table: display name, last 4 digits, and cycle/expiry
-  date (`mmdd`, decoded). Read-only.
+  month (`mm`). Read-only.
 
-**Default cycle date for new cards.** Add a reserved `_default` key to `cards.config.json` —
-e.g. `"_default": { "mmdd": "1231" }` — and any newly-detected card with no `mmdd` inherits it
-automatically on the next build (year-end = anchor Dec, closing day 31). Existing entries are
-never overwritten; omit `_default` to keep the generic behavior (anchor from earliest statement
-month).
+**Default cycle month for new cards.** Add a reserved `_default` key to `cards.config.json` —
+e.g. `"_default": { "mm": "12" }` — and any newly-detected card with no month inherits it
+automatically on the next build (December anchor). Existing entries are never overwritten; omit
+`_default` to keep the generic behavior (anchor from earliest statement month).
 
 ## Install as a plugin
 

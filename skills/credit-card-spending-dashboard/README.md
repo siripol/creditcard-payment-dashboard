@@ -47,33 +47,33 @@ open dashboard.html          # self-contained: no internet, no other files
 ## Cards config (by last 4 digits)
 
 Copy `cards.config.example.json` → `cards.config.json` (git-ignored) and map each
-card's **last 4 digits** to a display name and its statement-cycle date:
+card's **last 4 digits** to a display name and its cycle anchor month:
 
 ```json
 {
-  "1234": { "name": "My Travel Card", "mmdd": "1001" },
-  "6789": { "name": "My Cashback Card", "mmdd": "1115" }
+  "1234": { "name": "My Travel Card", "mm": "10" },
+  "6789": { "name": "My Cashback Card", "mm": "11" }
 }
 ```
 
 - key = **last 4 digits** of the card number (how the dashboard identifies the card)
 - `name` = display name shown in the dashboard
-- `mmdd` = statement-cycle date. **MM** (month) is used as the rewards-accumulation
-  **cycle anchor**; **DD** (closing day) is stored for reference.
+- `mm` = **cycle anchor month** (`01`–`12`), the month the rewards/accumulation cycle
+  resets. (A legacy `mmdd` value still works — the build reads its leading `MM`.)
 
 Cards you don't configure still appear automatically — with a default name
 (`Card ••<last4>`) and a cycle anchor guessed from the first month seen. Colors are
 assigned automatically from a palette.
 
-Optionally set a reserved `_default` entry to give every *new* card a fixed cycle date
+Optionally set a reserved `_default` entry to give every *new* card a fixed anchor month
 instead of the guessed one:
 
 ```json
-{ "_default": { "mmdd": "1231" }, "1234": { "name": "My Card", "mmdd": "1001" } }
+{ "_default": { "mm": "12" }, "1234": { "name": "My Card", "mm": "10" } }
 ```
 
-On the next build, any detected card with no `mmdd` inherits `_default.mmdd` (here `1231`
-= year-end) and it's saved back to `cards.config.json`. Existing entries are never
+On the next build, any detected card with no month inherits `_default.mm` (here `12` =
+December) and it's saved back to `cards.config.json`. Existing entries are never
 overwritten; omit `_default` to keep the guessed-from-first-month behavior.
 
 ### Commands
@@ -91,16 +91,16 @@ after changing a card/recurring rule):
 /update-dashboard
 ```
 
-Set a card's cycle from chat instead of editing JSON:
+Set a card's cycle anchor month from chat instead of editing JSON:
 
 ```
-/set-expiryCard <last4> <mmdd>
+/set-expiryCard <last4> <mm>
 ```
 
-e.g. `/set-expiryCard 1234 1001` — upserts that card in `cards.config.json`, then
+e.g. `/set-expiryCard 1234 10` — upserts that card in `cards.config.json`, then
 rebuilds.
 
-List every card (name, last 4 digits, cycle/expiry `mmdd`) in one table:
+List every card (name, last 4 digits, cycle anchor month `mm`) in one table:
 
 ```
 /list-cards
