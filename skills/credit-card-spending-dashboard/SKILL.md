@@ -186,6 +186,25 @@ updates); `merchant_group()` applies it **before** instalment stripping (first m
 members). Every write is confirmed first. This is the user-curated, safe counterpart to the auto
 prefix-collapse reverted in v0.7.0.
 
+### `/add-merchantToGroup` and `/remove-merchantFromGroup`
+
+The **per-merchant** counterpart to the regex-based `/set-merchantGroup` — same
+`merchant_group.json`, same first-match-wins order, grouping-only (raw `tx.merch` never renamed).
+A single merchant is written as a **literal, anchored** rule (`^<escaped merch>$`), **prepended**
+so it beats any broad rule.
+
+- **`/add-merchantToGroup <merchant> <group>`** — resolve the exact merchant from `data.js`
+  (asks if fuzzy/multiple, refuses 0-match), show current→new group, confirm, then upsert the
+  anchored rule (replaces an existing rule for the same merchant rather than duplicating).
+- **`/remove-merchantFromGroup <merchant>`** — pull one merchant out so it stands alone. Covers
+  all routes a merchant is grouped: if a literal `^merch$` entry exists → **delete it** (this both
+  leaves a group and **undoes a self-pin**); else if grouped by a broad regex or instalment-strip
+  → **prepend a self-pin** `{^merch$ → merch}` (others in the broad rule untouched); else already
+  standalone → no-op. It distinguishes a self-pin from a never-grouped merchant by whether the
+  entry exists, not just by `merchGroup == merch`.
+- **`/remove-merchantFromGroup group "<G>"`** — dissolve a whole group: delete every entry whose
+  `group == G`; members revert. Reports "nothing to delete" if `G` has no override entries.
+
 ### Instalment grouping (`merchGroup`)
 
 Instalments like `2C2P *EXAMPLE INSURANCE 01/03`, `02/03`, `03/03` (same shop, different งวด) are

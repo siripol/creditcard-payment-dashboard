@@ -76,6 +76,12 @@ you delete the PDFs.
   match and refuses over-broad ones, then you name the group. Writes `merchant_group.json`
   (git-ignored, survives updates); grouping-only, never renames the raw merchant name. Confirms
   before every write.
+- **`/add-merchantToGroup <merchant> <group>`** — add one specific merchant to a group by its
+  exact name (per-merchant counterpart to `/set-merchantGroup`). Writes a literal anchored rule to
+  `merchant_group.json`; grouping-only, confirms before writing.
+- **`/remove-merchantFromGroup <merchant>`** — pull one merchant out of its group so it stands
+  alone (deletes its own rule, or self-pins it out of a broad rule; also undoes a prior self-pin).
+  `/remove-merchantFromGroup group "<name>"` dissolves a whole group. Confirms before every write.
 
 **Default cycle month for new cards.** Add a reserved `_default` key to `cards.config.json` —
 e.g. `"_default": { "mm": "12" }` — and any newly-detected card with no month inherits it

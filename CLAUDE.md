@@ -57,6 +57,16 @@ python3 build_data.py     # PDFs in statements/ -> data.js + reports + dashboard
   Grouping-only — sets the derived `merchGroup`, never renames the raw `tx.merch`. Confirms before
   every write. This is the user-curated, safe counterpart to the auto prefix-collapse reverted in
   v0.7.0.
+- `/add-merchantToGroup <merchant> <group>` — per-merchant counterpart to `/set-merchantGroup`:
+  add one exact merchant to a group. Resolves the merchant from `data.js`, then **prepends** a
+  literal anchored rule `{"pattern": "^<escaped merch>$", "group": "<G>"}` to `merchant_group.json`
+  **only** (replaces an existing same-pattern rule, never duplicates). Grouping-only, confirms.
+- `/remove-merchantFromGroup <merchant>` — pull one merchant out (stands alone), or
+  `group "<name>"` to dissolve a whole group. Single-merchant: if a literal `^merch$` entry exists
+  → **delete it** (covers leaving a group *and* undoing a self-pin); else grouped by broad regex /
+  instalment-strip → **prepend a self-pin** `{^merch$ → own name}`; else already standalone → no-op
+  (distinguishes self-pin from never-grouped by entry existence, not just `merchGroup == merch`).
+  Dissolve: delete every entry with `group == name`. Writes `merchant_group.json` **only**, confirms.
 - `/set-expiryCard <last4> <mm>` — upsert one entry in `cards.config.json` (cycle anchor
   month `MM`, `01`–`12`), then rebuild. Edits config only.
 - `/set-recurringRule <plain words>` — translate a natural-language rule into the
