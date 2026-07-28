@@ -9,7 +9,7 @@ credit-card **statement PDFs** into one self-contained offline `dashboard.html` 
 reports. Generic and **card-count-agnostic**: dropping a new card's e-statements into
 `statements/` makes it appear automatically — no code edit. Ships with **no personal data**.
 
-The plugin surface = 17 slash commands (`commands/`) + 1 skill
+The plugin surface = 18 slash commands (`commands/`) + 1 skill
 (`skills/credit-card-spending-dashboard/`). All real logic lives in the skill.
 
 ## Commands (build / run)
@@ -92,6 +92,9 @@ python3 build_data.py     # PDFs in statements/ -> data.js + reports + dashboard
   `plugin.json`'s version. On build error it stops without stamping.
 - `/list-cards` — read-only: print a table of every card (name, last 4 digits, cycle/expiry
   `mm`) by merging `CCDATA.cardMeta` (from `data.js`) with per-card `mm` in `cards.config.json`.
+- `/version` — read-only: show the declared version (`plugin.json`, verify `marketplace.json`
+  matches), the version the current dashboard was built with (`CCDATA.version`, also in the footer),
+  and the `.cc_migration.json` marker. Flags a stale dashboard (declared ≠ built) → `/update-dashboard`.
 - `/list-category` — read-only: list the `merchant_category.json` overrides (keyword→category) with
   how many merchants/tx each matches in `data.js`; flags stale (0-match) entries. Counterpart of
   `/set-category`.
@@ -275,11 +278,16 @@ names, config filenames, version, pipeline behavior) and reconcile before `git a
 feature adds, reverts, and behavior changes alike.
 
 **Pre-commit checklist for a version bump** (do all before `git commit`):
-1. Update every affected doc (the files above) + bump the version in **both** manifests.
+1. **Auto-bump the version** in **both** manifests every submit that changes behavior/commands/config
+   (patch for fixes/docs, minor for new commands/features), and update every affected doc.
 2. Add a row for the new version to `skills/credit-card-spending-dashboard/MIGRATIONS.md` — the
    `/migrate` ledger — even if the action is `none` (rebuild covers it). This keeps existing users'
    local config/state upgradeable across versions.
-3. Then commit.
+3. Commit, then **tag with the version**: `credit-card-spending-dashboard--v<version>` (the tag
+   scheme derives from the manifest version — never hand-pick a mismatching tag). Push + release.
+
+The build stamps the version into `CCDATA.version` (from `plugin.json`) so the dashboard footer and
+`/version` can report exactly which version produced the current `data.js`/`dashboard.html`.
 
 ## Answering spending questions
 

@@ -99,6 +99,9 @@ you delete the PDFs.
   current version. Applies the per-version steps in `MIGRATIONS.md` newer than the recorded
   `.cc_migration.json` marker (idempotent), rebuilds, then stamps the marker. Most steps are just a
   rebuild; it flags any manual follow-up (e.g. re-adding the marketplace after a rename).
+- **`/version`** — show which version is in play: the declared version (`plugin.json`), the version
+  the current dashboard was built with (`CCDATA.version`, also in the dashboard footer), and the
+  last-migrated marker. Flags a stale dashboard so you know when to rebuild. Read-only.
 
 **Default cycle month for new cards.** Add a reserved `_default` key to `cards.config.json` —
 e.g. `"_default": { "mm": "12" }` — and any newly-detected card with no month inherits it

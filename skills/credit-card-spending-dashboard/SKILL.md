@@ -144,6 +144,14 @@ Merges the detected card set from `CCDATA.cardMeta` (in `data.js`) with each car
 `cards.config.json`; cards without a month fall back to `_default` or show `—`. `mm` is the
 cycle anchor month, **not** a physical card-expiry year.
 
+### `/version`
+
+Read-only: report the **declared** version (`.claude-plugin/plugin.json`, verify `marketplace.json`
+matches), the **dashboard build** version (`CCDATA.version` — the build stamps `plugin.json`'s version
+into the payload; also shown in the dashboard footer), and the **last-migrated** marker
+(`.cc_migration.json`). If declared ≠ built, the dashboard is stale → `/update-dashboard`. Useful to
+confirm a plugin update actually took effect.
+
 ### `/list-category` and `/list-merchantGroup`
 
 Read-only counterparts of `/set-category` and `/set-merchantGroup`. `/list-category` lists the

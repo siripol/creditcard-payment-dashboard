@@ -187,7 +187,7 @@ footer{color:var(--sub);font-size:12px;margin-top:26px;border-top:1px solid var(
 <div id="tab-savings" class="hidden"></div>
 <div id="tab-all" class="hidden"></div>
 <div id="tab-mapping" class="hidden"></div>
-<footer>หมายเหตุ: แสดงเฉพาะค่าใช้จ่ายจริง — ตัดยอดชำระ / เงินคืน / Cashback / ยอดติดลบ และคู่รายการที่ถูกยกเลิกออกแล้ว (ตัดรายการซ้ำในเดือนเดียวกัน <span id="mDup"></span> รายการ, คู่ reverse <span id="mPair"></span> คู่) · จัดหมวดและรวมชื่อร้านจาก Description · ยอดสะสมในรอบบัตรคำนวณตามรอบปัจจุบันเสมอ ไม่ขึ้นกับช่วงเดือนที่เลือก · ตัวเลขประหยัดเป็นการประเมิน ไม่ใช่คำแนะนำทางการเงิน</footer>
+<footer>หมายเหตุ: แสดงเฉพาะค่าใช้จ่ายจริง — ตัดยอดชำระ / เงินคืน / Cashback / ยอดติดลบ และคู่รายการที่ถูกยกเลิกออกแล้ว (ตัดรายการซ้ำในเดือนเดียวกัน <span id="mDup"></span> รายการ, คู่ reverse <span id="mPair"></span> คู่) · จัดหมวดและรวมชื่อร้านจาก Description · ยอดสะสมในรอบบัตรคำนวณตามรอบปัจจุบันเสมอ ไม่ขึ้นกับช่วงเดือนที่เลือก · ตัวเลขประหยัดเป็นการประเมิน ไม่ใช่คำแนะนำทางการเงิน · เวอร์ชัน <span id="ver"></span></footer>
 </div>
 <script>
 const P=window.CCDATA;
@@ -206,6 +206,7 @@ const nf=v=>Number(v).toLocaleString('en-US'); // integer counts with thousands 
 function rgba(h,a){const n=parseInt(h.slice(1),16);return `rgba(${n>>16},${n>>8&255},${n&255},${a})`}
 document.getElementById('mDup').textContent=P.meta.dupRemoved;
 document.getElementById('mPair').textContent=P.meta.pairsRemoved;
+{const _v=document.getElementById('ver');if(_v)_v.textContent=P.version||(P.meta&&P.meta.version)||'?';}
 
 const S={card:'ALL',range:12,tab:'overview',sub:'all',hidden:new Set()};
 // ---- dashboard-local user edits (persisted in localStorage, applied to a COPY of the data; never mutates CCDATA) ----

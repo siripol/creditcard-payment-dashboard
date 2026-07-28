@@ -32,6 +32,16 @@ import re, glob, json, sys, os
 # Default: a "statements" folder next to this script.
 # Override with:  CC_SOURCE_DIR=/path/to/pdfs python3 build_data.py
 _HERE = os.path.dirname(os.path.abspath(__file__))
+PLUGIN_JSON = os.path.join(_HERE, "..", "..", ".claude-plugin", "plugin.json")
+
+def plugin_version():
+    """Read the plugin version from .claude-plugin/plugin.json so the build can stamp the
+    dashboard with it (used by /version to confirm which version produced the current output)."""
+    try:
+        return json.load(open(PLUGIN_JSON, encoding="utf-8")).get("version", "unknown")
+    except Exception:
+        return "unknown"
+
 SOURCE_DIR = os.environ.get("CC_SOURCE_DIR", os.path.join(_HERE, "statements"))
 OUT_JS     = os.environ.get("CC_OUT", os.path.join(_HERE, "data.js"))
 OUT_HTML   = os.environ.get("CC_DASH", os.path.join(_HERE, "dashboard.html"))
@@ -528,10 +538,10 @@ def build():
     payload = dict(tx=tx, catOrder=CAT_ORDER, th=TH, colors=COLORS, group=GROUP,
                    cards=cards, cardMeta=cardMeta, reduceGroups=reduce_groups,
                    hiddenCards=hidden_cards,
-                   mth=mth, months=months,
+                   mth=mth, months=months, version=plugin_version(),
                    meta=dict(raw=raw_n, dupRemoved=dup_removed, pairsRemoved=pairs,
                              expenses=len(tx), files=len(built_from),
-                             builtFrom=built_from))
+                             builtFrom=built_from, version=plugin_version()))
     with open(OUT_JS, 'w', encoding='utf-8') as fh:
         fh.write("window.CCDATA = " + json.dumps(payload, ensure_ascii=False) + ";\n")
 
