@@ -272,7 +272,10 @@ no page-level horizontal scroll. Show the check results.
 **Before committing any code change, update ALL affected docs in the same commit.** A commit that
 changes behavior, commands, or config without matching docs is incomplete. Concretely, sync
 whichever of these the change touches: `README.md`, this `CLAUDE.md`, `skills/credit-card-spending-dashboard/{SKILL.md,README.md}`,
-the relevant `commands/*.md`, and the command lists in `.claude-plugin/{plugin.json,marketplace.json}`.
+and the relevant `commands/*.md`. The **authoritative command list lives in `README.md`** (and the
+slash-commands section here) — the `.claude-plugin/{plugin.json,marketplace.json}` `description` is a
+short human-readable summary, **not** a full command dump (keep it readable; don't re-stuff every
+command into it). When adding a command, add it to `README.md` + this file, not the manifest description.
 Bump the version in **both** manifests. Grep the docs for anything the change touched (command
 names, config filenames, version, pipeline behavior) and reconcile before `git add`. Applies to
 feature adds, reverts, and behavior changes alike.
