@@ -9,7 +9,7 @@ credit-card **statement PDFs** into one self-contained offline `dashboard.html` 
 reports. Generic and **card-count-agnostic**: dropping a new card's e-statements into
 `statements/` makes it appear automatically — no code edit. Ships with **no personal data**.
 
-The plugin surface = 12 slash commands (`commands/`) + 1 skill
+The plugin surface = 17 slash commands (`commands/`) + 1 skill
 (`skills/credit-card-spending-dashboard/`). All real logic lives in the skill.
 
 ## Commands (build / run)
@@ -39,7 +39,9 @@ python3 build_data.py     # PDFs in statements/ -> data.js + reports + dashboard
   and re-reads `cards.config.json` / `merchant_category.json` / `recurring_rule.js`). Source
   precedence `statements/` → `.txt_cache/` → `data.js`: with neither statements nor cache it falls
   back to the existing `data.js`, re-deriving category + grouping from each row's stored
-  `desc`/`merch` (best-effort — `desc` is stored capped, see below).
+  `desc`/`merch` (best-effort — `desc` is stored capped, see below). Also **looks up a real name
+  for any `Card ••<last4>` card** from the cached statement text (anchored on the masked-PAN line,
+  `_CARD_HEADER_RE`), proposes it, and on confirm writes it via the `/set-cardName` path.
 - `/set-category [<keyword> <Category>]` — map merchants stuck in `Other` to a category. Writes
   `merchant_category.json` **only** (git-ignored, not shipped). Manual (`<keyword> <Category>`,
   `_source="user"`) or, with no args, Claude classifies the `Other` merchants (`_source="llm"`,
@@ -67,10 +69,27 @@ python3 build_data.py     # PDFs in statements/ -> data.js + reports + dashboard
   instalment-strip → **prepend a self-pin** `{^merch$ → own name}`; else already standalone → no-op
   (distinguishes self-pin from never-grouped by entry existence, not just `merchGroup == merch`).
   Dissolve: delete every entry with `group == name`. Writes `merchant_group.json` **only**, confirms.
+- `/merge-merchantGroup "<A>" "<B>" [as "<N>"]` — merge 2+ groups into one name N: rename every rule
+  with `group∈{A,B}`→N, pin auto-instalment members via literal rules. Writes `merchant_group.json`
+  **only**, previews members + confirms.
+- `/auto-merchantGroup` — LLM proposes groups (collapsing opaque-token variants of the **same** real
+  merchant), **confirmed one group at a time**, prefix-safe (never merges different-suffix merchants —
+  see the v0.7.0 revert). Writes `merchant_group.json` **only**. Opt-in.
+- `/apply-userConfig [path]` — apply the dashboard's exported on-screen edits (`cc_dashboard_edits.json`:
+  hidden cards / group renames+merges / group categories) into the durable config: `_hidden` in
+  `cards.config.json`, renames→`merchant_group.json`, categories→`merchant_category.json`; then rebuild.
+  The bridge for the browser→config gap (static HTML can't write files).
 - `/set-expiryCard <last4> <mm>` — upsert one entry in `cards.config.json` (cycle anchor
   month `MM`, `01`–`12`), then rebuild. Edits config only.
+- `/set-cardName <last4> "<name>"` — upsert the `name` key of one `cards.config.json` entry
+  (preserves `mm`/other keys), then rebuild. Fixes the `Card ••<last4>` button fallback. Config
+  only — no `build_data.py` change (the build already reads `cardMeta[k].name`).
 - `/set-recurringRule <plain words>` — translate a natural-language rule into the
   `recurring_rule.js` hook body **only**. Never touches `build_data.py` / `index.html`.
+- `/migrate` — upgrade the user's local git-ignored state to the current plugin version. Reads the
+  shipped `MIGRATIONS.md` ledger + the git-ignored `.cc_migration.json` marker (`{"version"}`),
+  applies each ledger step newer than the marker (idempotent), rebuilds, then stamps the marker to
+  `plugin.json`'s version. On build error it stops without stamping.
 - `/list-cards` — read-only: print a table of every card (name, last 4 digits, cycle/expiry
   `mm`) by merging `CCDATA.cardMeta` (from `data.js`) with per-card `mm` in `cards.config.json`.
 - `/list-category` — read-only: list the `merchant_category.json` overrides (keyword→category) with
@@ -175,9 +194,22 @@ matrix on purpose (full numbers would widen columns and risk horizontal scroll).
 all งวด of a series share a core; `merchant_name()` output (`tx.merch`) is left untouched. Merge is
 by identical core only (different cores like `Shell` branches never merge). `index.html` aggregates
 merchants by `merchGroup` (`agg()`), drill-down shows the original `merch`; the all-transactions tab
-has both `ร้านค้า (ตามบิล)` and `กลุ่มร้านค้า` columns, and the **Merchant Group** tab is a per-card
-QA view of `merchGroup` ↔ member `merch`. The build reports each detected series (≥2 `N/M` rows of
+has both `ร้านค้า (ตามบิล)` and `กลุ่มร้านค้า` columns, and the **Merchant Group** tab is an
+**all-cards** QA view of `merchGroup` ↔ member `merch` (grouping is card-independent, so it is not
+split per card; rows are top-aligned). The build reports each detected series (≥2 `N/M` rows of
 equal amount).
+
+**Dashboard on-screen edits (client-side, `index.html`):** the dashboard keeps three kinds of user
+edit in `localStorage` (key `cc_dash_<sorted cards>`) and applies them to a **copy** of `CCDATA` at
+render (never mutating it): **Display Card** hides cards (⚙ Settings menu; hidden cards are excluded
+everywhere incl. the "รวมทุกบัตร" total, keeping ≥1 visible), and **right-click** on a Merchant
+Group row **renames a group** (renaming to an existing name auto-merges) or **sets its category**
+(from the dashboard's own `CAT` list). A `txFiltered()` projection threads renames+category+hidden
+through `agg()` so every tab reflects them. Because static HTML can't write repo files, the ⚙
+panel's **Export** downloads `cc_dashboard_edits.json` (`hiddenCards`/`groupRenames`/`categoryEdits`)
+and **`/apply-userConfig`** writes it into the durable config. The build seeds the Display-Card
+default from a reserved `"_hidden"` list in `cards.config.json` → `CCDATA.hiddenCards` (localStorage
+overrides per browser). `cc_dashboard_edits.json` is git-ignored (holds card last4 + merchant names).
 
 **Merchant-group overrides (update-safe):** `merchant_group()` also takes a user regex→group-name
 map from `merchant_group.json` (`load_group_overrides()`, git-ignored, ships only
@@ -195,6 +227,15 @@ only by that amount now group together). Preserve-source holds: raw `tx.desc` ke
 only the derived `merch`/`merchGroup` are cleaned. `index.html` shows `tx.fx` as a muted sub-line
 under the amount in the all-transactions tab + drill-down, and as a CSV column. `FX_CCY` is a
 per-bank adaptation point (extend to the currency codes your statements print).
+
+**Version migration (`/migrate`):** because the user's config/state is git-ignored (survives plugin
+updates), it can drift from a newer schema. `MIGRATIONS.md` (shipped, tracked) is the ordered
+per-version ledger of local-state changes; `.cc_migration.json` (git-ignored) records the
+last-migrated version. `/migrate` applies each ledger step newer than the marker (transforms are
+**idempotent**, so a missing/stale marker never double-applies), rebuilds, then stamps the marker.
+Most entries are just `rebuild` (the build re-derives `data.js`), so the ledger's real value is the
+audit trail + the occasional `manual` step (e.g. re-add marketplace after the 0.16.1 rename). The
+ledger is **not** driven by `build_data.py` — it is Claude-followed prose, like the other commands.
 
 ## Data-integrity rules (non-negotiable — never weaken)
 
@@ -232,6 +273,13 @@ the relevant `commands/*.md`, and the command lists in `.claude-plugin/{plugin.j
 Bump the version in **both** manifests. Grep the docs for anything the change touched (command
 names, config filenames, version, pipeline behavior) and reconcile before `git add`. Applies to
 feature adds, reverts, and behavior changes alike.
+
+**Pre-commit checklist for a version bump** (do all before `git commit`):
+1. Update every affected doc (the files above) + bump the version in **both** manifests.
+2. Add a row for the new version to `skills/credit-card-spending-dashboard/MIGRATIONS.md` — the
+   `/migrate` ledger — even if the action is `none` (rebuild covers it). This keeps existing users'
+   local config/state upgradeable across versions.
+3. Then commit.
 
 ## Answering spending questions
 

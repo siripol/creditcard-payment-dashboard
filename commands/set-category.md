@@ -31,6 +31,12 @@ The user's input is: `$ARGUMENTS`
 2. For each, propose a category **from the valid list** using your own knowledge of the merchant
    (e.g. `EXAMPLE MALL` → `Shopping & Retail`, `EXAMPLE INSURANCE` → `Insurance`). No external API is
    used — you (this session) do the classifying.
+
+   > **Caution — payment-facilitator passthrough.** For `<facilitator>*<real merchant>` strings
+   > (a payment aggregator prefix), classify by the **real merchant (the suffix), per merchant** —
+   > never assign one category to a whole prefix. Fabricated example: `PayHub*Xx_BrandA` → Telecom,
+   > `PayHub*Xx_BrandB` → Transport, `PayHub*Xx_Delivery` → Food & Dining (same prefix, different
+   > categories).
 3. **Show the proposed keyword → category table and ask the user to confirm or edit** before
    writing anything.
 4. On confirmation, upsert the entries into `merchant_category.json` — each with

@@ -87,20 +87,23 @@ Monthly update (rebuild everything from newly-added PDFs):
 ```
 
 Re-categorize and rebuild from the existing statements, **without** importing new PDFs (use
-after changing a card/recurring rule):
+after changing a card/recurring rule). Also **looks up a real name for any `Card ••xxxx` card**
+from the cached statement text, proposes it, and (on confirm) names it:
 
 ```
 /update-dashboard
 ```
 
-Set a card's cycle anchor month from chat instead of editing JSON:
+Set a card's cycle anchor month, or its display name, from chat instead of editing JSON:
 
 ```
-/set-expiryCard <last4> <mm>
+/set-expiryCard <last4> <mm>            # cycle anchor month (01-12)
+/set-cardName  <last4> "<name>"         # button display name (replaces Card ••<last4>)
 ```
 
-e.g. `/set-expiryCard 1234 10` — upserts that card in `cards.config.json`, then
-rebuilds.
+e.g. `/set-expiryCard 1234 10` upserts that card's `mm`; `/set-cardName 1234 "My Travel Card"`
+sets its `name` (preserving `mm`). Both write `cards.config.json` and rebuild. A card with no name
+shows the fallback `Card ••<last4>` on the dashboard button.
 
 List every card (name, last 4 digits, cycle anchor month `mm`) in one table:
 
@@ -148,6 +151,34 @@ Add or remove **one specific merchant** to/from a group (per-merchant counterpar
 rule (which both leaves a group **and** undoes a prior self-pin), or self-pins it out of a broad /
 instalment group, else reports it is already standalone.
 
+Merge groups, or let Claude propose groups (safely):
+
+```
+/merge-merchantGroup "Coffee A" "Coffee B" as "Coffee"   # merge 2+ groups into one
+/auto-merchantGroup                                       # Claude proposes groups, confirm one at a time
+```
+
+`/auto-merchantGroup` only collapses **opaque-token variants of the same merchant** (e.g.
+`SubSvc*<random> CITY` → one) and is **prefix-safe** — it never merges different merchants that
+merely share a prefix (a payment-facilitator prefix like `PayHub*Xx_BrandA` vs `PayHub*Xx_BrandB`,
+or a same-brand/different-venue pair like `MegaMall Dept.` vs `MegaMall Food Hall`).
+
+## Editing on the dashboard (Settings ⚙, right-click) → `/apply-userConfig`
+
+The dashboard lets you tune the view directly, saved in your browser (localStorage):
+
+- **⚙ Settings → Display Card** — tick which cards show on screen. Hidden cards drop out of every
+  view **including the "รวมทุกบัตร" total**. (The build seeds the default from a reserved `"_hidden"`
+  list in `cards.config.json`; your browser choice overrides it.)
+- **Merchant Group tab** — one all-cards view with a **search box** (filter by group name, member
+  merchant, or category). **Right-click a row** to rename the group (renaming to an existing name
+  **merges** them) or set its category from a dropdown of the dashboard's categories. Display-only
+  until applied.
+
+Because the offline `dashboard.html` can't write files, the ⚙ panel's **Export config** downloads
+`cc_dashboard_edits.json`; run **`/apply-userConfig`** to write those edits into the durable config
+(`cards.config.json` `_hidden`, `merchant_group.json`, `merchant_category.json`) and rebuild.
+
 ## Merchant category overrides & instalment grouping
 
 - **Category overrides** — copy `merchant_category.example.json` → `merchant_category.json`
@@ -192,6 +223,19 @@ at the top of the file.
 one charge** that month (insurance excluded). If the hook is missing, the dashboard
 falls back to this default. The rule drives the **dashboard**; the Markdown report's
 recurring list uses the default.
+
+## Version migration (`/migrate`)
+
+Your config/state files are git-ignored, so they **survive plugin updates** — but that means they
+can drift from a newer schema. After updating the plugin, run `/migrate` to upgrade them to the
+current version:
+
+- `MIGRATIONS.md` (shipped, tracked) is the ordered per-version ledger of what each version changed
+  to local state and the action to apply (`rebuild` / `none` / `manual`).
+- `.cc_migration.json` (git-ignored) records your last-migrated version, e.g. `{"version":"0.16.1"}`.
+- `/migrate` applies every ledger step newer than that marker (each is **idempotent**), rebuilds,
+  then stamps the marker to the current version. It flags any manual follow-up (e.g. re-adding the
+  marketplace after the 0.16.1 id rename).
 
 ## Requirements
 

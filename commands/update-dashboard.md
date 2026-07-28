@@ -1,5 +1,5 @@
 ---
-description: Re-categorize all transactions and rebuild the dashboard from the existing statements — no new statements needed.
+description: Re-categorize all transactions and rebuild the dashboard from the existing statements — no new statements needed. Also looks up real names for any Card ••xxxx cards from statement text.
 argument-hint: (no arguments — uses statements already imported)
 ---
 
@@ -27,8 +27,22 @@ Do this:
    (from `data.js` / `spending_report.md` if present).
 3. **Rebuild.** Run `python3 build_data.py` (Python 3.12+; use `python3.12` if `python3` is
    older). No new files are imported; existing statements are re-parsed and re-categorized.
-4. **Report** any category totals that moved and the number of transactions whose category
+4. **Name any `Card ••xxxx` cards from statement text.** After the rebuild, look at
+   `CCDATA.cardMeta`: any card whose `name` is still the fallback `Card ••<last4>` has no name in
+   `cards.config.json`. For each such card, try to discover its real name:
+   - In `.txt_cache/*.txt`, find the card's masked-PAN line — the PAN whose clear trailing 4 digits
+     equal the card's last-4 (same anchor as the build's `_CARD_HEADER_RE` in `build_data.py`) — and
+     read the lines around it (statement header block, or the lines just above/below the PAN) for a
+     plausible **bank + card product name**. This reads statement text (handled by Claude) — say so.
+   - **Propose → confirm:** show a table `last4 → suggested name (source line)` and ask the user to
+     accept or edit each. **Never invent a name** — if none is found for a card, say so and point to
+     `/set-cardName <last4> "<name>"`.
+   - On confirmation, upsert each accepted `name` into `cards.config.json` (preserve `mm` / other
+     keys, same as `/set-cardName`) and **rebuild again** so the buttons pick up the names.
+   - If there is no `.txt_cache` (the source was `data.js` only), skip this step and note that
+     naming needs statement text or `/set-cardName`.
+5. **Report** any category totals that moved and the number of transactions whose category
    changed.
-5. **Deliver** the refreshed `dashboard.html` and summarize what changed vs. the baseline.
-6. **Never guess numbers** — every figure comes from the generated data/reports. On a build
+6. **Deliver** the refreshed `dashboard.html` and summarize what changed vs. the baseline.
+7. **Never guess numbers** — every figure comes from the generated data/reports. On a build
    error, show the error and stop; do not summarize from stale data.

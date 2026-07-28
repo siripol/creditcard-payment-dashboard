@@ -46,6 +46,14 @@ Do this:
 3. **Classify each candidate** into a valid category using your own knowledge of the merchant and
    the sample description. Only keep rows where your category **differs from the current** one (the
    corrections) — those are what will change.
+
+   > **Caution — payment-facilitator passthrough.** Some merchant strings are
+   > `<facilitator>*<real merchant>` — a payment aggregator prepends its name. Classify by the
+   > **real merchant (the suffix), per merchant** — never assign one category to a whole prefix,
+   > because the same prefix hides different merchants. Fabricated example:
+   > `PayHub*Xx_BrandA` → `Utilities & Telecom`, `PayHub*Xx_BrandB` → `Transport & Ride-hailing`,
+   > `PayHub*Xx_Delivery` → `Food & Dining` — same `PayHub*` prefix, three different categories.
+   > Applies to any facilitator prefix.
 4. **Show a summary table and confirm** before writing anything (amounts comma-formatted):
 
    | Merchant | Current → Proposed | Tx | Total |

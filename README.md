@@ -51,9 +51,13 @@ you delete the PDFs.
   statements, **without** importing new PDFs. Use after changing a card/recurring rule. Source
   precedence `statements/` → `.txt_cache/` → `data.js`: with no statements or cache it rebuilds
   from the existing `data.js` (re-deriving category + merchant grouping), so a stale dashboard
-  missing instalment grouping can be fixed without the PDFs.
+  missing instalment grouping can be fixed without the PDFs. Also **looks up a real name for any
+  `Card ••xxxx` card** from the cached statement text, proposes it, and (on confirm) names it.
 - **`/set-expiryCard <last4> <mm>`** — set a card's cycle anchor month (`MM`, `01`–`12`).
   Keyed by the card's last 4 digits. e.g. `/set-expiryCard 1234 10`.
+- **`/set-cardName <last4> "<name>"`** — set a card's display name (the label on the dashboard
+  buttons), replacing the `Card ••<last4>` fallback. Writes `cards.config.json` (preserves the
+  card's `mm`); rebuilds. e.g. `/set-cardName 5006 "KBank Travel"`.
 - **`/set-recurringRule <describe in words>`** — change what counts as a recurring merchant by
   describing it in plain language; it rewrites the `recurring_rule.js` hook only.
 - **`/list-cards`** — list every card in one table: display name, last 4 digits, and cycle/expiry
@@ -82,6 +86,19 @@ you delete the PDFs.
 - **`/remove-merchantFromGroup <merchant>`** — pull one merchant out of its group so it stands
   alone (deletes its own rule, or self-pins it out of a broad rule; also undoes a prior self-pin).
   `/remove-merchantFromGroup group "<name>"` dissolves a whole group. Confirms before every write.
+- **`/merge-merchantGroup "<A>" "<B>" [as "<N>"]`** — merge two (or more) groups into one named
+  group; previews the combined members and confirms. Writes `merchant_group.json`.
+- **`/auto-merchantGroup`** — Claude proposes groups (collapsing opaque-token variants of the **same**
+  merchant), **confirmed one group at a time**, and is prefix-safe: it never merges different
+  merchants that merely share a prefix (e.g. a payment-facilitator prefix, or same brand/different
+  venue). Opt-in.
+- **`/apply-userConfig [path]`** — apply the edits you made **on the dashboard** (⚙ Display Card,
+  right-click group rename/merge, right-click group category) — exported as `cc_dashboard_edits.json`
+  — into the durable config, then rebuild. Bridges the browser (which can't write files) to config.
+- **`/migrate`** — after updating the plugin, upgrade your local (git-ignored) config/state to the
+  current version. Applies the per-version steps in `MIGRATIONS.md` newer than the recorded
+  `.cc_migration.json` marker (idempotent), rebuilds, then stamps the marker. Most steps are just a
+  rebuild; it flags any manual follow-up (e.g. re-adding the marketplace after a rename).
 
 **Default cycle month for new cards.** Add a reserved `_default` key to `cards.config.json` —
 e.g. `"_default": { "mm": "12" }` — and any newly-detected card with no month inherits it

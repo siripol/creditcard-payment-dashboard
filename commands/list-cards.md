@@ -26,4 +26,5 @@ Do this:
    card's `name` from `cardMeta`; if unnamed it displays as `Card ••<last4>`.
 4. **Confirm the count**: number of rows must equal the number of cards in `cardMeta`.
 5. Note under the table that `mm` is the cycle anchor month (not a physical card expiry). To
-   change one, use `/set-expiryCard <last4> <mm>`.
+   change the cycle month use `/set-expiryCard <last4> <mm>`; to change a card's display name (fix
+   a `Card ••<last4>` row) use `/set-cardName <last4> "<name>"`.

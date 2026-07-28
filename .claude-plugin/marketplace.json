@@ -7,8 +7,8 @@
     {
       "name": "credit-card-spending-dashboard",
       "source": "./",
-      "version": "0.16.1",
-      "description": "Turn monthly credit-card statement PDFs into one self-contained offline dashboard.html plus Markdown reports. Card-count-agnostic; ships no personal data. Commands: /update-statement, /update-dashboard, /set-expiryCard, /set-recurringRule, /list-cards, /set-category, /set-merchantGroup, /add-merchantToGroup, /remove-merchantFromGroup, /list-category, /list-merchantGroup, /auto-categorize."
+      "version": "0.17.0",
+      "description": "Turn monthly credit-card statement PDFs into one self-contained offline dashboard.html plus Markdown reports. Card-count-agnostic; ships no personal data. Commands: /update-statement, /update-dashboard, /set-expiryCard, /set-cardName, /set-recurringRule, /list-cards, /set-category, /set-merchantGroup, /add-merchantToGroup, /remove-merchantFromGroup, /merge-merchantGroup, /auto-merchantGroup, /apply-userConfig, /list-category, /list-merchantGroup, /auto-categorize, /migrate."
     }
   ]
 }

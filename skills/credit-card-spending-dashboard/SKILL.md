@@ -99,6 +99,13 @@ the build falls back to the existing `data.js`, re-deriving category + grouping 
 stored `desc`/`merch` (best-effort — `desc` is stored capped at 2048 chars; full statement text
 gives a guaranteed re-categorize). If `data.js` is also absent it stops.
 
+After the rebuild it also **looks up a real name for any `Card ••<last4>` card** (unnamed in
+`cards.config.json`): find the card's masked-PAN line in `.txt_cache/*.txt` (same anchor as the
+build's `_CARD_HEADER_RE`), read the surrounding header lines for a plausible bank + product name,
+propose `last4 → name` for the user to confirm/edit, then write accepted names via the
+`/set-cardName` path and rebuild. Never invents a name — if none is found, points to
+`/set-cardName`; skips the lookup entirely when there is no `.txt_cache`.
+
 ### `/set-expiryCard <last4> <mm>`
 
 Set a card's **cycle anchor month**. `<last4>` = the last 4 digits of the card. `<mm>` = `MM`,
@@ -119,6 +126,16 @@ cycle month yet — e.g. `"_default": { "mm": "12" }` gives every new card a Dec
 Existing entries are never overwritten (idempotent), and the new entry is persisted back to
 `cards.config.json` so it stays editable. If `_default` is absent, an unlisted card keeps the
 generic behaviour (anchor derived from its earliest statement month).
+
+### `/set-cardName <last4> "<name>"`
+
+Set a card's **display name** (the label on the dashboard card buttons), replacing the
+`Card ••<last4>` fallback the build emits for unnamed cards (`cardMeta[k].name`). Upsert the
+`name` key of that card's `cards.config.json` entry, **preserving** `mm`/legacy `mmdd`/other keys,
+then rebuild. Config-only — no `build_data.py` change (the build already reads the name). A card
+not yet detected from a statement can be named, but its button appears only after a build detects
+it. This is the name counterpart of `/set-expiryCard` (which sets only `mm`); `/update-dashboard`
+can auto-suggest names from statement text.
 
 ### `/list-cards`
 
@@ -205,6 +222,46 @@ so it beats any broad rule.
 - **`/remove-merchantFromGroup group "<G>"`** — dissolve a whole group: delete every entry whose
   `group == G`; members revert. Reports "nothing to delete" if `G` has no override entries.
 
+### `/merge-merchantGroup` and `/auto-merchantGroup`
+
+- **`/merge-merchantGroup "<A>" "<B>" [as "<N>"]`** — merge 2+ groups into one name N: rename every
+  `merchant_group.json` rule with `group∈{inputs}`→N, and pin auto-instalment members via literal
+  rules (like `/merge` for groups). Previews the combined members + confirms.
+- **`/auto-merchantGroup`** — LLM-proposed grouping, the safe counterpart to `/auto-categorize`:
+  proposes groups that collapse **only opaque-token variants of the same real merchant** and
+  **confirms one group at a time** (never a bulk approve). **Prefix-safe** — must not merge merchants
+  that only share a prefix: payment-facilitator passthrough (`<facilitator>*<real merchant>`, the
+  suffix is the merchant) and same-brand/different-venue both stay separate. When unsure, skip. This
+  is why the automatic prefix-collapse was reverted in v0.7.0. Skips already-curated merchants; opt-in.
+
+### Dashboard on-screen edits + `/apply-userConfig`
+
+`index.html` keeps three client-side edit types in `localStorage` (key `cc_dash_<sorted cards>`),
+applied to a **copy** of `CCDATA` at render (never mutated): **Display Card** (⚙ Settings menu →
+hide cards; excluded everywhere incl. the "รวมทุกบัตร" total, ≥1 kept; default seeded from
+`cards.config.json` reserved `"_hidden"` → `CCDATA.hiddenCards`), and **right-click a Merchant Group
+row** → rename (renaming to an existing name auto-merges) / set category (from `CAT`). A
+`txFiltered()` projection (`projTx`) threads renames+category+hidden through `agg()` so all tabs
+reflect them. Because static HTML can't write repo files, the ⚙ panel **Export** downloads
+`cc_dashboard_edits.json` (`hiddenCards`/`groupRenames`/`categoryEdits`) and **`/apply-userConfig`**
+writes it into the durable config (`cards.config.json` `_hidden`, `merchant_group.json`,
+`merchant_category.json`) then rebuilds — so screen, reports, and config agree.
+
+### `/migrate`
+
+Upgrade the user's local **git-ignored** state (`cards.config.json`, `merchant_category.json`,
+`merchant_group.json`, `recurring_rule.js`, `data.js`) to the **current plugin version** after a
+plugin update. Two files drive it (both in the skill dir): the shipped ordered ledger
+`MIGRATIONS.md` (per-version: config change + action `rebuild`/`none`/`manual`), and the
+git-ignored marker `.cc_migration.json` (`{"version"}`, the last-migrated version; absent =
+baseline). The command reads the current version from `.claude-plugin/plugin.json`, applies every
+ledger step with `marker < version <= current` **in order**, rebuilds, and **on success** stamps
+the marker to the current version (on a build error it stops without stamping). Every transform is
+**idempotent** — detect already-migrated shape and no-op — so a missing/stale marker never
+double-applies. It's Claude-followed prose (not `build_data.py` logic), like the other commands.
+Maintainer rule: every version bump adds a `MIGRATIONS.md` row before commit (see the pre-commit
+checklist in `CLAUDE.md`).
+
 ### Instalment grouping (`merchGroup`)
 
 Instalments like `2C2P *EXAMPLE INSURANCE 01/03`, `02/03`, `03/03` (same shop, different งวด) are
@@ -224,10 +281,13 @@ keeps the full text. The dashboard shows `tx.fx` as a muted line under the amoun
 tab + drill-down) and as a CSV column. `FX_CCY` is a per-bank adaptation point — extend it to the
 currency codes your statements print.
 
-The dashboard's **Merchant Group** (mapping QA) tab — one screen per card — lists every
-`merchGroup` with the distinct `ร้านค้า (ตามบิล)` names merged into it, its category, count and
-total, flagging groups that merged >1 name (a count badge) and groups still in `Other` (dimmed).
-Use it to eyeball that grouping and categorization are correct. In the ร้านค้า matrix and the
+The dashboard's **Merchant Group** (mapping QA) tab — **one all-cards screen** (grouping is
+card-independent; no per-card split; rows top-aligned) — lists every `merchGroup` with the distinct
+`ร้านค้า (ตามบิล)` names merged into it, its category, count and total, flagging groups that merged
+>1 name (a count badge) and groups still in `Other` (dimmed). Use it to eyeball that grouping and
+categorization are correct; a **search box** filters rows by group name / member `merch` / category;
+**right-click a row** to rename the group (auto-merges on name collision) or set its category (see
+the on-screen-edits section above → `/apply-userConfig`). In the ร้านค้า matrix and the
 category matrix, **every month column header is click-to-sort** (like `เฉลี่ย/เดือน` / `รวม`).
 
 > Scope note: the hook is JavaScript and drives the **dashboard**. The Markdown report's

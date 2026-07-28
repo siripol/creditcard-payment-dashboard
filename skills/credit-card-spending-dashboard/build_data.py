@@ -522,8 +522,12 @@ def build():
         col, bar = CARD_PALETTE[i % len(CARD_PALETTE)]
         cardMeta[k] = dict(name=(cfg.get(k) or {}).get("name", "Card \u2022\u2022" + k), anchor=anchor, color=col, bar=bar)
     reduce_groups = [c for c in CAT_ORDER if GROUP.get(c) == 'reduce']
+    # reserved "_hidden" in cards.config.json: cards the dashboard hides by default (Display Card menu
+    # persists per-browser in localStorage and overrides this). Only keep entries that are real cards.
+    hidden_cards = [k for k in (cfg.get("_hidden") or []) if k in cards]
     payload = dict(tx=tx, catOrder=CAT_ORDER, th=TH, colors=COLORS, group=GROUP,
                    cards=cards, cardMeta=cardMeta, reduceGroups=reduce_groups,
+                   hiddenCards=hidden_cards,
                    mth=mth, months=months,
                    meta=dict(raw=raw_n, dupRemoved=dup_removed, pairsRemoved=pairs,
                              expenses=len(tx), files=len(built_from),

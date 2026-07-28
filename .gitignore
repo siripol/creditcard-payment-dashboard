@@ -9,6 +9,10 @@ merchant_category.json
 **/merchant_category.json
 merchant_group.json
 **/merchant_group.json
+.cc_migration.json
+**/.cc_migration.json
+cc_dashboard_edits.json
+**/cc_dashboard_edits.json
 data.js
 **/data.js
 dashboard.html
