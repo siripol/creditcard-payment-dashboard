@@ -7,7 +7,7 @@
     {
       "name": "credit-card-spending-dashboard",
       "source": "./",
-      "version": "0.18.2",
+      "version": "0.18.3",
       "description": "Turn monthly credit-card statement PDFs into one self-contained offline dashboard.html plus Markdown reports. Card-count-agnostic (reads card + month from file content), auto-categorizes and groups merchants and instalments, editable on-screen (hide cards, rename/merge merchant groups, recategorize), and ships no personal data. Start with /update-statement or /update-dashboard — see the README for all slash commands."
     }
   ]

@@ -235,16 +235,9 @@ def merchant_name(d):
     'CCY amount' — that lives in tx.fx); does NOT strip instalment counters -- that grouping lives
     in merchant_group() / the tx 'merchGroup' field."""
     d = _FX_RE.sub('', d)   # drop a trailing foreign 'CCY amount' (kept separately in tx.fx)
-    D = d.upper()
-    rules = [
-        ('SUPERMARKET', 'Supermarket'),
-        ('COFFEE', 'Coffee Shop'),
-        ('FUEL', 'Fuel Station'),
-        # ('YOUR RAW KEYWORD', 'Your Display Name'),
-    ]
-    for k, v in rules:
-        if k in D:
-            return v
+    # No generic substring relabeling (e.g. COFFEE->'Coffee Shop'): that discarded the real bill
+    # name and merged distinct shops before grouping could run. All grouping lives in
+    # merchant_group() / merchant_group.json, which keeps the real name in the drill-down.
     n = re.sub(r'\s{2,}.*$', '', d).strip()
     return n.title() if n.isupper() else n
 
@@ -318,6 +311,12 @@ def detect_card_key(txt):
     """Return the card identifier = LAST 4 DIGITS of the card number shown on the statement.
     Statements usually print a masked PAN like '1234-56XX-XXXX-7890'. ADAPT this regex.
     Falls back to 'UNKNOWN' if not found (configure it in cards.config.json)."""
+    # Prefer a properly masked PAN: require a mask group and allow multi-char ' - ' separators so
+    # the match cannot run past the clear last-4 into a balance/amount printed on the same
+    # pdftotext -layout line (that produced phantom last-4 like ..0135 -> 1351/1353 per month).
+    mp = re.search(r'\d{4}[\s\-]+[\dXx*]{2,4}[\s\-]+[Xx*]{2,4}[\s\-]+(\d{4})', txt)
+    if mp:
+        return mp.group(1)
     m2 = re.search(r'(\d[\dX*\- ]{6,}\d)', txt)
     if m2:
         d = re.sub(r'\D', '', m2.group(1))
@@ -333,7 +332,7 @@ def detect_card_key(txt):
 # so it never swallows amounts that share the line on summary rows. A mask char (X/*) is required so
 # a plain 16-digit run or a long number in a merchant name is not mistaken for a PAN. ADAPT the
 # group shape/separators to how your statement prints the card header.
-_CARD_HEADER_RE = re.compile(r'(\d{4}[\s\-][\dXx*]{2,4}[\s\-][\dXx*]{2,4}[\s\-](\d{4}))')
+_CARD_HEADER_RE = re.compile(r'(\d{4}[\s\-]+[\dXx*]{2,4}[\s\-]+[\dXx*]{2,4}[\s\-]+(\d{4}))')
 
 def card_key_from_line(line):
     """If a line is a (masked) card-number header, return the card's last 4 digits, else None. Used
