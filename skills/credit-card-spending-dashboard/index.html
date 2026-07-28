@@ -151,6 +151,8 @@ details.mini{margin-top:6px}details.mini summary{cursor:pointer;color:var(--acce
 .chartbox{position:relative;height:230px}
 footer{color:var(--sub);font-size:12px;margin-top:26px;border-top:1px solid var(--line);padding-top:14px}
 @media(max-width:820px){.grid2{grid-template-columns:1fr}.row{grid-template-columns:1fr}.row .bar{order:3}.row .a{text-align:right}.tops{columns:1}}
+/* phones: shrink the fixed-width structure bar so a gbar row can't force page-level horizontal scroll (iPhone view) */
+@media(max-width:480px){html,body{overflow-x:hidden;max-width:100%}.gbar{gap:8px;padding:10px 12px}.gbarbar{flex:0 1 56px;min-width:0}.gbar .gv{font-size:12px}}
 .mtable td{vertical-align:top}
 #gearBtn{padding:7px 11px;font-size:15px;line-height:1}
 .setpanel{position:absolute;top:100%;right:20px;margin-top:6px;z-index:60;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 26px rgba(0,0,0,.14);padding:12px 14px;min-width:230px}
