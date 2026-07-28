@@ -9,7 +9,7 @@ credit-card **statement PDFs** into one self-contained offline `dashboard.html` 
 reports. Generic and **card-count-agnostic**: dropping a new card's e-statements into
 `statements/` makes it appear automatically — no code edit. Ships with **no personal data**.
 
-The plugin surface = 3 slash commands (`commands/`) + 1 skill
+The plugin surface = 12 slash commands (`commands/`) + 1 skill
 (`skills/credit-card-spending-dashboard/`). All real logic lives in the skill.
 
 ## Commands (build / run)

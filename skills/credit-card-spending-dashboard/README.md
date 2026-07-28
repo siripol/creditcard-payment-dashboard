@@ -135,6 +135,19 @@ grouping-only — never renames the raw merchant name):
 /set-merchantGroup rename "Example Subscription" -> "Example Sub"
 ```
 
+Add or remove **one specific merchant** to/from a group (per-merchant counterpart to
+`/set-merchantGroup`, same `merchant_group.json`, grouping-only):
+
+```
+/add-merchantToGroup "STARBUCKS TH" "Coffee"     # add one merchant to a group
+/remove-merchantFromGroup "STARBUCKS TH"         # pull one merchant out (stands alone)
+/remove-merchantFromGroup group "Coffee"         # dissolve a whole group
+```
+
+`/remove-merchantFromGroup` covers every way a merchant is grouped: it deletes the merchant's own
+rule (which both leaves a group **and** undoes a prior self-pin), or self-pins it out of a broad /
+instalment group, else reports it is already standalone.
+
 ## Merchant category overrides & instalment grouping
 
 - **Category overrides** — copy `merchant_category.example.json` → `merchant_category.json`
@@ -155,8 +168,10 @@ grouping-only — never renames the raw merchant name):
   (git-ignored, survives updates) and map `{"pattern": "<regex>", "group": "<name>"}` entries.
   `merchant_group()` applies them **before** instalment stripping (first matching regex wins), so
   varying-token merchants (`ExampleSub*XXXX CITY`) collapse into one named group. Set/rename
-  via `/set-merchantGroup`. Grouping-only — the raw `tx.merch` is never renamed. The per-card
-  **Merchant Group** tab lets you eyeball that each group maps the right member merchants.
+  via `/set-merchantGroup` (regex), or add/remove one merchant at a time via
+  `/add-merchantToGroup` and `/remove-merchantFromGroup` (which also dissolves a whole group).
+  Grouping-only — the raw `tx.merch` is never renamed. The per-card **Merchant Group** tab lets
+  you eyeball that each group maps the right member merchants.
 
 ## Recurring-merchant rule (a hook — describe it in words)
 

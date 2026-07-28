@@ -101,7 +101,7 @@ This repo *is* the plugin (it carries both `.claude-plugin/plugin.json` and a
 /plugin install credit-card-spending-dashboard@credit-card-spending-dashboard
 ```
 
-Then reload/restart the session. The four commands below and the
+Then reload/restart the session. The commands below and the
 `credit-card-spending-dashboard` skill become available (namespaced
 `credit-card-spending-dashboard:`).
 
