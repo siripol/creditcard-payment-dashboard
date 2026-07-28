@@ -1,4 +1,4 @@
-# creditcard-payment-dashboard
+# credit-card-spending-dashboard
 
 A **Cowork / Claude Code plugin** that turns monthly credit-card **statement PDFs** into a
 single self-contained, offline HTML dashboard plus Markdown reports. It is **generic and
@@ -97,19 +97,19 @@ This repo *is* the plugin (it carries both `.claude-plugin/plugin.json` and a
 **From GitHub** — run in any Claude Code session:
 
 ```
-/plugin marketplace add siripol/creditcard-payment-dashboard
-/plugin install creditcard-payment-dashboard@creditcard-payment-dashboard
+/plugin marketplace add siripol/credit-card-spending-dashboard
+/plugin install credit-card-spending-dashboard@credit-card-spending-dashboard
 ```
 
 Then reload/restart the session. The four commands below and the
 `credit-card-spending-dashboard` skill become available (namespaced
-`creditcard-payment-dashboard:`).
+`credit-card-spending-dashboard:`).
 
 **Pull later updates** — after new commits land on `main`, refresh the cache then update:
 
 ```
-/plugin marketplace update creditcard-payment-dashboard
-/plugin update creditcard-payment-dashboard@creditcard-payment-dashboard
+/plugin marketplace update credit-card-spending-dashboard
+/plugin update credit-card-spending-dashboard@credit-card-spending-dashboard
 ```
 
 **Manage / uninstall:**
@@ -117,14 +117,14 @@ Then reload/restart the session. The four commands below and the
 ```
 /plugin list                                                  # what's installed
 /plugin marketplace list                                      # configured marketplaces
-/plugin uninstall creditcard-payment-dashboard@creditcard-payment-dashboard
-/plugin marketplace remove creditcard-payment-dashboard
+/plugin uninstall credit-card-spending-dashboard@credit-card-spending-dashboard
+/plugin marketplace remove credit-card-spending-dashboard
 ```
 
 **Local / dev** — load a checkout without installing (session-only):
 
 ```bash
-claude --plugin-dir /path/to/creditcard-payment-dashboard
+claude --plugin-dir /path/to/credit-card-spending-dashboard
 ```
 
 ## Quick start (standalone, no install)
