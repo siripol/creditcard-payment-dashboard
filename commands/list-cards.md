@@ -8,7 +8,7 @@ Show a table of all credit cards known to the dashboard.
 Do this:
 
 1. **Gather the card set.** The authoritative list of detected cards is `CCDATA.cardMeta` in
-   `skills/credit-card-spending-dashboard/data.js` (each key = the card's last 4 digits, with a
+   `$CC_DATA_DIR/data.js` (each key = the card's last 4 digits, with a
    display `name` and cycle `anchor` month). If `data.js` does not exist yet (e.g. a fresh
    container), run `python3 build_data.py` first (requires Python 3.12+; use `python3.12` if
    `python3` is older). If there are still no statements to build from, fall back to reading

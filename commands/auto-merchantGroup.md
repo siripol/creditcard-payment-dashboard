@@ -5,7 +5,7 @@ argument-hint: (no arguments)
 
 Bulk-grouping counterpart to `/auto-categorize`, but deliberately **safer**: a wrong grouping
 corrupts per-merchant totals, so **nothing is written without per-group confirmation**. Writes
-**`skills/credit-card-spending-dashboard/merchant_group.json` only** (git-ignored, not shipped).
+**`$CC_DATA_DIR/merchant_group.json` only** (git-ignored, not shipped).
 Never edits `build_data.py`. Grouping-only — the raw `tx.merch` is never renamed. Opt-in (merchant
 names are read by Claude).
 
@@ -22,7 +22,7 @@ Do this:
    list before writing each rule.
 4. On **accept**, upsert the group's rule into `merchant_group.json` (create the file from the
    example emptied to `{ "groups": [] }` if absent). After all groups are processed, **rebuild once**:
-   `cd skills/credit-card-spending-dashboard && python3 build_data.py`. Report what was grouped. On a
+   `export CC_DATA_DIR="${CC_DATA_DIR:-$HOME/.credit-card-dashboard}"; python3 "$CLAUDE_PLUGIN_ROOT/skills/credit-card-spending-dashboard/build_data.py"`. Report what was grouped. On a
    build error, show it and stop.
 
 ### The decision rule (critical — read before proposing)

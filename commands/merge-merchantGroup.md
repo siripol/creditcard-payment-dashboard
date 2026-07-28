@@ -5,7 +5,7 @@ argument-hint: '"<groupA>" "<groupB>" [as "<name>"]'
 
 Fold two or more existing **merchant groups** into a single group under one name. Per-merchant
 counterpart family member of `/set-merchantGroup` / `/add-merchantToGroup`. Writes
-**`skills/credit-card-spending-dashboard/merchant_group.json` only** (git-ignored, not shipped —
+**`$CC_DATA_DIR/merchant_group.json` only** (git-ignored, not shipped —
 survives updates). Never edits `build_data.py`. Grouping-only — the raw `tx.merch` is never renamed.
 
 A group's members = the transactions whose `merchGroup` equals that group. Merging groups A, B → new
@@ -16,7 +16,7 @@ The user's input is: `$ARGUMENTS`
 Do this:
 
 1. **Parse** the group names (2 or more, quoted) and an optional `as "<name>"`. Resolve each group's
-   members from `skills/credit-card-spending-dashboard/data.js` (`CCDATA.tx[].merchGroup`; run
+   members from `$CC_DATA_DIR/data.js` (`CCDATA.tx[].merchGroup`; run
    `python3 build_data.py` from that dir first if `data.js` is absent). If a named group matches
    **0** transactions, warn it is stale and ask whether to continue.
 2. **Choose the new name N:** if `as "<name>"` was given, use it. Otherwise propose one (e.g. the
@@ -31,7 +31,7 @@ Do this:
      if an equal rule already exists).
    - Preserve all other entries + the `_comment`. Create the file from
      `merchant_group.example.json` emptied to `{ "groups": [] }` (keep `_comment`) if absent.
-5. **Rebuild:** `cd skills/credit-card-spending-dashboard && python3 build_data.py` (Python 3.12+;
+5. **Rebuild:** `export CC_DATA_DIR="${CC_DATA_DIR:-$HOME/.credit-card-dashboard}"; python3 "$CLAUDE_PLUGIN_ROOT/skills/credit-card-spending-dashboard/build_data.py"` (Python 3.12+;
    `python3.12` if older). Report how many tx were regrouped and show the resulting entries.
 6. On a build error, show it and stop — do not summarize from stale data.
 

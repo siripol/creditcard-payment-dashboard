@@ -237,6 +237,21 @@ current version:
   then stamps the marker to the current version. It flags any manual follow-up (e.g. re-adding the
   marketplace after the 0.16.1 id rename).
 
+## Keeping code and data separate (`CC_DATA_DIR`)
+
+Shipped **code** (`build_data.py`, `index.html`, `vendor/`, examples) is **replaced on every plugin
+update**; your **data** (statements, `.txt_cache/`, the config JSONs, `data.js`/`dashboard.html`/reports)
+should live outside the plugin so an update never overwrites it and always runs the newest code:
+
+```bash
+export CC_DATA_DIR="$HOME/.credit-card-dashboard"   # persistent, chosen once
+mkdir -p "$CC_DATA_DIR/statements"                  # drop your PDFs here
+```
+
+`build_data.py` routes all data through `CC_DATA_DIR` (default = the skill dir, so existing setups keep
+working). Run the **installed** script — `python3 "$CLAUDE_PLUGIN_ROOT/skills/credit-card-spending-dashboard/build_data.py"`
+— never a copy. `/migrate` moves any legacy in-skill-dir data into `CC_DATA_DIR` once.
+
 ## Requirements
 
 - `python3` (**3.12+** — the generator uses backslashes in f-string expressions)

@@ -142,6 +142,19 @@ data at runtime via `<script src="data.js">` (`window.CCDATA`). Never embed gene
 back into `index.html`. The delivered single-file `dashboard.html` is produced by
 `write_single_html()`, which inlines everything into a *copy* of `index.html`.
 
+**CODE vs DATA separation (`CC_DATA_DIR`) — update-safety:** shipped **code** (`build_data.py`,
+`index.html`, `vendor/`, `recurring_rule.js`, `*.example.json`) lives in the skill dir (`_HERE`) and
+is **replaced on every plugin update**; **user data** (`statements/`, `.txt_cache/`, the three config
+JSONs, `data.js`/`dashboard.html`/reports, `.cc_migration.json`) resolves from
+**`CC_DATA_DIR`** (`build_data.py`: `DATA_DIR = os.environ.get("CC_DATA_DIR", _HERE)`; default `_HERE`
+= backward compatible). Commands `export CC_DATA_DIR="${CC_DATA_DIR:-$HOME/.credit-card-dashboard}"`
+and run the **installed** script at `$CLAUDE_PLUGIN_ROOT` — **never a copied `build_data.py`/`index.html`**
+(that copy froze the template → stale-dashboard bug). So every build = newest code + existing data;
+an update can't wipe statements or leave an old template. Staleness guard: `/update-dashboard` compares
+`CCDATA.version` (stamped from `plugin.json`) with the plugin version and force-rebuilds on mismatch.
+`/migrate` moves any legacy in-skill-dir data into `CC_DATA_DIR` once. Only `_HERE` holds code; only
+`CC_DATA_DIR` holds data — keep them apart.
+
 **Auto N-card:** no card names/count are hardcoded. `build()` emits `cards` + `cardMeta`
 (name, cycle `anchor`, colors from `CARD_PALETTE`) + `reduceGroups`; `index.html` renders
 every card button, cycle block, and color dynamically from that payload.

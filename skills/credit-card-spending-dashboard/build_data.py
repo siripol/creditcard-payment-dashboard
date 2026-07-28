@@ -42,13 +42,25 @@ def plugin_version():
     except Exception:
         return "unknown"
 
-SOURCE_DIR = os.environ.get("CC_SOURCE_DIR", os.path.join(_HERE, "statements"))
-OUT_JS     = os.environ.get("CC_OUT", os.path.join(_HERE, "data.js"))
-OUT_HTML   = os.environ.get("CC_DASH", os.path.join(_HERE, "dashboard.html"))
+# --- CODE vs DATA separation ---
+# _HERE = the shipped skill dir (CODE: build_data.py, index.html, vendor, examples) — REPLACED on
+# every plugin update. DATA_DIR = persistent user state — never touched by an update. Point
+# CC_DATA_DIR at a stable folder (e.g. $HOME/.credit-card-dashboard) so updates always run the newest
+# code against your existing statements/config/outputs. Default = _HERE → fully backward compatible.
+DATA_DIR = os.environ.get("CC_DATA_DIR", _HERE)
+
+# user data (persistent, git-ignored) — resolves from DATA_DIR
+SOURCE_DIR = os.environ.get("CC_SOURCE_DIR", os.path.join(DATA_DIR, "statements"))
+CACHE_DIR  = os.environ.get("CC_CACHE_DIR",  os.path.join(DATA_DIR, ".txt_cache"))
+OUT_JS     = os.environ.get("CC_OUT",  os.path.join(DATA_DIR, "data.js"))
+OUT_HTML   = os.environ.get("CC_DASH", os.path.join(DATA_DIR, "dashboard.html"))
+CARDS_CONFIG = os.path.join(DATA_DIR, "cards.config.json")
+MERCHANT_CATEGORY = os.path.join(DATA_DIR, "merchant_category.json")
+MERCHANT_GROUP = os.path.join(DATA_DIR, "merchant_group.json")
+MIGRATION_MARKER = os.path.join(DATA_DIR, ".cc_migration.json")
+
+# code / shipped assets — resolve from _HERE (replaced on update)
 VENDOR_CHARTJS = os.path.join(_HERE, "vendor", "chart.umd.js")
-CARDS_CONFIG = os.path.join(_HERE, "cards.config.json")
-MERCHANT_CATEGORY = os.path.join(_HERE, "merchant_category.json")
-MERCHANT_GROUP = os.path.join(_HERE, "merchant_group.json")
 CARD_PALETTE =[("#134e7a","#7ba0c4"),("#c65a2b","#e2a06f"),("#0f6e56","#6db3a0"),("#6a3d9a","#a684c7"),("#9a6a00","#d0ad5a"),("#8a1f4b","#c77394")]
 def load_card_config():
     if os.path.isfile(CARDS_CONFIG):
@@ -414,10 +426,11 @@ def load_rows_from_data_js():
     return rows
 
 def build():
+    os.makedirs(DATA_DIR, exist_ok=True)   # ensure the persistent data dir exists (esp. a fresh CC_DATA_DIR)
     # statements/ may be absent when rebuilding from the .txt_cache archive (PDFs removed);
     # glob on a missing dir just returns [] and the .txt_cache fallback below handles it.
     files = sorted(glob.glob(os.path.join(SOURCE_DIR, '*.pdf'))) if os.path.isdir(SOURCE_DIR) else []
-    cache = os.path.join(_HERE, '.txt_cache')
+    cache = CACHE_DIR
     os.makedirs(cache, exist_ok=True)
     # Resolve the extracted-text files to build from.
     if files:
@@ -572,7 +585,7 @@ def write_markdown(P):
     from collections import defaultdict
     tx, TH, CO, GROUP = P['tx'], P['th'], P['colors'], P['group']
     months, mth, CAT_ORDER = P['months'], P['mth'], P['catOrder']
-    out = os.environ.get("CC_MD", os.path.join(_HERE, "spending_report.md"))
+    out = os.environ.get("CC_MD", os.path.join(DATA_DIR, "spending_report.md"))
 
     def fmt(v): return "฿{:,.0f}".format(round(v))
 
@@ -723,7 +736,7 @@ def write_monthly_brief(P):
     from collections import defaultdict
     tx, TH, GROUP = P['tx'], P['th'], P['group']
     months, mth = P['months'], P['mth']
-    out = os.environ.get("CC_BRIEF", os.path.join(_HERE, "monthly_brief.md"))
+    out = os.environ.get("CC_BRIEF", os.path.join(DATA_DIR, "monthly_brief.md"))
 
     def fmt(v): return "\u0e3f{:,.0f}".format(round(v))
     def pct(new, old):

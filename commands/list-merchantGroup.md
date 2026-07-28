@@ -20,9 +20,9 @@ Do this:
 
    ```bash
    python3 - <<'PY'
-   import re,json
-   d=json.loads(re.search(r'window\.CCDATA\s*=\s*(\{.*\})\s*;',open('skills/credit-card-spending-dashboard/data.js',encoding='utf-8').read(),re.S).group(1))
-   groups=json.load(open('merchant_group.json',encoding='utf-8')).get('groups',[])
+   import re,json,os
+   d=json.loads(re.search(r'window\.CCDATA\s*=\s*(\{.*\})\s*;',open(os.environ['CC_DATA_DIR']+'/data.js',encoding='utf-8').read(),re.S).group(1))
+   groups=json.load(open(os.environ['CC_DATA_DIR']+'/merchant_group.json',encoding='utf-8')).get('groups',[])
    rx=[(re.compile(g['pattern'],re.I),g['group'],g['pattern']) for g in groups]
    for r,name,pat in rx:
        hits=[t for t in d['tx'] if r.search(t['merch']) and next((nm for rr,nm,_ in rx if rr.search(t['merch'])),None)==name]

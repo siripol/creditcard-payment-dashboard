@@ -15,7 +15,13 @@ on every transaction, and re-reads `cards.config.json`, `merchant_category.json`
 
 Do this:
 
-1. **Check inputs.** Confirm `statements/` still holds the PDFs (or `.txt_cache/` is present).
+0. **Set the data dir + use the installed code.** `export CC_DATA_DIR="${CC_DATA_DIR:-$HOME/.credit-card-dashboard}"`
+   and always run the build from `$CLAUDE_PLUGIN_ROOT` — never a copied script — so this uses the
+   **newest** `build_data.py`/`index.html` against your existing data (see SKILL.md "Paths: CODE vs
+   DATA"). **Staleness guard:** if `$CC_DATA_DIR/data.js` exists, compare its `CCDATA.version` with
+   the plugin's `plugin.json` version; if they differ, the dashboard was built by an older plugin →
+   **force a full rebuild** and say so (a version bump must never leave an old dashboard in place).
+1. **Check inputs.** Confirm `$CC_DATA_DIR/statements/` still holds the PDFs (or `.txt_cache/` is present).
    Source precedence is `statements/` PDFs → `.txt_cache/` → **`data.js`**: when there are no
    statements and no cache, the build falls back to the existing `data.js`, re-deriving
    `category()` / `merchant_name()` / `merchant_group()` from each transaction's stored `desc`
@@ -25,8 +31,9 @@ Do this:
    If `data.js` is also missing, stop and tell the user to run `/update-statement` first.
 2. **Record the baseline** for a before/after diff: current category totals and merchant count
    (from `data.js` / `spending_report.md` if present).
-3. **Rebuild.** Run `python3 build_data.py` (Python 3.12+; use `python3.12` if `python3` is
-   older). No new files are imported; existing statements are re-parsed and re-categorized.
+3. **Rebuild.** Run `python3 "$CLAUDE_PLUGIN_ROOT/skills/credit-card-spending-dashboard/build_data.py"`
+   (Python 3.12+; use `python3.12` if `python3` is older) with `CC_DATA_DIR` exported. No new files
+   are imported; existing statements are re-parsed and re-categorized.
 4. **Name any `Card ••xxxx` cards from statement text.** After the rebuild, look at
    `CCDATA.cardMeta`: any card whose `name` is still the fallback `Card ••<last4>` has no name in
    `cards.config.json`. For each such card, try to discover its real name:

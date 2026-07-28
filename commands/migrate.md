@@ -16,15 +16,20 @@ Driven by two files in `skills/credit-card-spending-dashboard/`:
 
 Do this:
 
-1. **Read the from-version.** Open `.cc_migration.json`; if absent, treat as **baseline** (older
-   than the earliest ledger entry — run all steps; they are idempotent, so this is safe).
+0. **Set the data dir + move legacy data (one-time).** `export CC_DATA_DIR="${CC_DATA_DIR:-$HOME/.credit-card-dashboard}"`.
+   If legacy user data still sits **inside the plugin skill dir** (`$CLAUDE_PLUGIN_ROOT/skills/credit-card-spending-dashboard/`)
+   — `statements/`, `.txt_cache/`, `cards.config.json`, `merchant_category.json`, `merchant_group.json`,
+   `data.js` — and `$CC_DATA_DIR` doesn't already have them, **move** them into `$CC_DATA_DIR` once
+   (so a future plugin update can't overwrite them). Never move the shipped `*.example.json` or code.
+1. **Read the from-version.** Open `$CC_DATA_DIR/.cc_migration.json`; if absent, treat as **baseline**
+   (older than the earliest ledger entry — run all steps; they are idempotent, so this is safe).
 2. **Read the current version** from `.claude-plugin/plugin.json` (`version`).
 3. **If equal**, report "already at current version" and stop (still safe to have run — no changes).
 4. **Apply each `MIGRATIONS.md` entry** with `from < version <= current`, in order. Follow each
    entry's action. Every transform must be **idempotent** — detect already-migrated shape and no-op
    — so a missing or stale marker never double-applies or corrupts. Some entries are code-only (no
    config action); note them but do nothing.
-5. **Rebuild:** `cd skills/credit-card-spending-dashboard && python3 build_data.py` (Python 3.12+;
+5. **Rebuild:** `export CC_DATA_DIR="${CC_DATA_DIR:-$HOME/.credit-card-dashboard}"; python3 "$CLAUDE_PLUGIN_ROOT/skills/credit-card-spending-dashboard/build_data.py"` (Python 3.12+;
    use `python3.12` if older). This regenerates `data.js` and re-derives fields (e.g. `merchGroup`,
    `fx`) — which covers most "migrations" on its own.
 6. **On success, stamp the marker:** write `{ "version": "<current>" }` to `.cc_migration.json`.

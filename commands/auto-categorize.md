@@ -28,10 +28,10 @@ Do this:
    ```bash
    python3 - <<'PY'
    import re,json,os
-   d=json.loads(re.search(r'window\.CCDATA\s*=\s*(\{.*\})\s*;',open('skills/credit-card-spending-dashboard/data.js',encoding='utf-8').read(),re.S).group(1))
+   d=json.loads(re.search(r'window\.CCDATA\s*=\s*(\{.*\})\s*;',open(os.environ['CC_DATA_DIR']+'/data.js',encoding='utf-8').read(),re.S).group(1))
    ov={}
-   if os.path.isfile('merchant_category.json'):
-       ov={k:v for k,v in json.load(open('merchant_category.json',encoding='utf-8')).items() if not k.startswith('_')}
+   if os.path.isfile(os.environ['CC_DATA_DIR']+'/merchant_category.json'):
+       ov={k:v for k,v in json.load(open(os.environ['CC_DATA_DIR']+'/merchant_category.json',encoding='utf-8')).items() if not k.startswith('_')}
    def pinned(name): return any(kw.lower() in name.lower() for kw in ov)
    agg={}
    for t in d['tx']:

@@ -6,7 +6,7 @@ argument-hint: '<merchant>   |   group "<group>"'
 Pull **one merchant** out of its merchant group so it stands alone under its own name, or
 **dissolve an entire group** so every member reverts. Per-merchant counterpart to
 `/set-merchantGroup`. Rules are written to
-**`skills/credit-card-spending-dashboard/merchant_group.json` only** (git-ignored, **not** shipped —
+**`$CC_DATA_DIR/merchant_group.json` only** (git-ignored, **not** shipped —
 survives updates). Never edits `build_data.py`. Grouping-only — the raw `tx.merch` is never renamed,
 only the derived `merchGroup`. Confirms before every write.
 
@@ -20,7 +20,7 @@ The user's input is: `$ARGUMENTS`
 mode**. Otherwise run **Single-merchant mode**.
 
 ### Single-merchant mode  (`<merchant>`)
-1. **Resolve the exact merchant** from `skills/credit-card-spending-dashboard/data.js`
+1. **Resolve the exact merchant** from `$CC_DATA_DIR/data.js`
    (`CCDATA.tx[].merch`) — run `python3 build_data.py` from that dir first if `data.js` is absent.
    0 matches → stop and say so. Fuzzy/partial hitting several → list candidates, ask which exact
    one. Show the merchant's current `merchGroup`.
@@ -41,7 +41,7 @@ mode**. Otherwise run **Single-merchant mode**.
      but *has* an entry to delete. Distinguish by whether the `^merch$` entry exists.
 3. **Explain which path** you're taking, **confirm**, apply the edit (preserve all other entries +
    the `_comment`).
-4. **Rebuild:** `cd skills/credit-card-spending-dashboard && python3 build_data.py` (Python 3.12+;
+4. **Rebuild:** `export CC_DATA_DIR="${CC_DATA_DIR:-$HOME/.credit-card-dashboard}"; python3 "$CLAUDE_PLUGIN_ROOT/skills/credit-card-spending-dashboard/build_data.py"` (Python 3.12+;
    `python3.12` if older). Report the tx that changed and show the updated entry (or that one was
    removed).
 

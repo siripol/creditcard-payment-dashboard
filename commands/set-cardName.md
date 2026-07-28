@@ -21,7 +21,7 @@ Do this:
 3. **Upsert** the entry for key `$1`: set `"name"` to the given name. **Preserve** any existing
    `"mm"` / legacy `"mmdd"` and every other key. Never touch reserved `_`-keys (`_comment`,
    `_default`).
-4. **Rebuild:** `cd skills/credit-card-spending-dashboard && python3 build_data.py` (Python 3.12+;
+4. **Rebuild:** `export CC_DATA_DIR="${CC_DATA_DIR:-$HOME/.credit-card-dashboard}"; python3 "$CLAUDE_PLUGIN_ROOT/skills/credit-card-spending-dashboard/build_data.py"` (Python 3.12+;
    use `python3.12` if `python3` is older). This refreshes `cardMeta.name`.
 5. **Confirm** back: show the updated JSON entry and that the button now reads the name. Note that a
    card not yet detected from a statement can still be named, but its button only appears after a

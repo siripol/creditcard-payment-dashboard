@@ -1,6 +1,6 @@
 {
   "name": "credit-card-spending-dashboard",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "description": "เปลี่ยนไฟล์ statement บัตรเครดิต (PDF) ให้เป็นแดชบอร์ดสรุปค่าใช้จ่าย dashboard.html แบบออฟไลน์ไฟล์เดียว + รายงาน Markdown อัตโนมัติ. รองรับบัตรกี่ใบก็ได้ (อ่านเลขบัตร/เดือนจากเนื้อไฟล์ ไม่ใช่ชื่อไฟล์), จัดหมวดค่าใช้จ่าย + รวมกลุ่มร้าน + รวมงวดผ่อนให้เอง, แก้ไขบนหน้าจอได้ (ซ่อนบัตร / เปลี่ยนชื่อ-รวมกลุ่มร้าน / เปลี่ยนหมวด), และไม่เก็บข้อมูลส่วนตัวลง repo. เริ่มด้วย /update-statement (อัปเดตจากไฟล์ใหม่) หรือ /update-dashboard (สร้างใหม่จากไฟล์เดิม) — ดูคำสั่งทั้งหมดใน README. Turn monthly credit-card statement PDFs into one self-contained offline dashboard.html plus Markdown reports. Card-count-agnostic (reads card + month from file content), auto-categorizes and groups merchants and instalments, editable on-screen (hide cards, rename/merge merchant groups, recategorize), and ships no personal data. See the README for the full list of slash commands.",
   "author": {
     "name": "SN"

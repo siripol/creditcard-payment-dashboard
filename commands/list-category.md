@@ -19,9 +19,9 @@ Do this:
 
    ```bash
    python3 - <<'PY'
-   import re,json
-   d=json.loads(re.search(r'window\.CCDATA\s*=\s*(\{.*\})\s*;',open('skills/credit-card-spending-dashboard/data.js',encoding='utf-8').read(),re.S).group(1))
-   raw=json.load(open('merchant_category.json',encoding='utf-8'))
+   import re,json,os
+   d=json.loads(re.search(r'window\.CCDATA\s*=\s*(\{.*\})\s*;',open(os.environ['CC_DATA_DIR']+'/data.js',encoding='utf-8').read(),re.S).group(1))
+   raw=json.load(open(os.environ['CC_DATA_DIR']+'/merchant_category.json',encoding='utf-8'))
    ov={k:v for k,v in raw.items() if not k.startswith('_')}
    src=raw.get('_source',{})   # keyword -> "user" | "llm"
    for kw,cat in ov.items():

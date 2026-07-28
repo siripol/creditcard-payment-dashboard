@@ -74,6 +74,34 @@ the statement text and emits `cards`, `cardMeta`, and `reduceGroups` into `windo
 
 ---
 
+## Paths: CODE vs DATA — how every command runs (update-safe)
+
+Separate replaceable **code** from persistent **user data** so a plugin update always runs the
+newest code against the existing data — never a stale template, never lost statements.
+
+- **CODE** ships in the plugin skill dir and is **replaced on every update**: `build_data.py`,
+  `index.html`, `vendor/`, `recurring_rule.js`, the `*.example.json` files. Resolve them from
+  **`$CLAUDE_PLUGIN_ROOT/skills/credit-card-spending-dashboard/`**. **Always run the installed
+  `build_data.py` — never copy it to a scratch dir and build from the copy** (that was the
+  stale-template bug).
+- **DATA** is persistent and git-ignored, kept in **`$CC_DATA_DIR`** (default =
+  `$HOME/.credit-card-dashboard`): `statements/`, `.txt_cache/`, `cards.config.json`,
+  `merchant_category.json`, `merchant_group.json`, the generated `data.js` / `dashboard.html` /
+  reports, `.cc_migration.json`, and any `cc_dashboard_edits.json`. `build_data.py` reads
+  `CC_DATA_DIR` (default `_HERE` for backward compatibility) and routes all of the above through it.
+
+**Canonical build invocation** (use in every command that rebuilds):
+
+```bash
+export CC_DATA_DIR="${CC_DATA_DIR:-$HOME/.credit-card-dashboard}"
+mkdir -p "$CC_DATA_DIR/statements"
+python3 "$CLAUDE_PLUGIN_ROOT/skills/credit-card-spending-dashboard/build_data.py"
+# deliver "$CC_DATA_DIR/dashboard.html"
+```
+
+All config/data file paths in the commands below are under `$CC_DATA_DIR`; the shipped
+`*.example.json` and the build script are under `$CLAUDE_PLUGIN_ROOT`.
+
 ## Commands
 
 Commands the user can invoke. `/update-statement` (import new PDFs + rebuild) and

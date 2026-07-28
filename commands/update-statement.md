@@ -7,12 +7,16 @@ Run the monthly credit-card spending dashboard update.
 
 Steps:
 
+0. **Set the data dir.** `export CC_DATA_DIR="${CC_DATA_DIR:-$HOME/.credit-card-dashboard}"; mkdir -p "$CC_DATA_DIR/statements"`.
+   All statements/config/outputs live under `$CC_DATA_DIR`; the build script is run from
+   `$CLAUDE_PLUGIN_ROOT` (installed code) — see SKILL.md "Paths: CODE vs DATA".
 1. **Find new statements.** Collect any PDF(s) the user just attached plus any already in
-   `statements/`. Copy attached PDFs into `statements/`. If there are no new PDFs at all, tell
-   the user there's nothing to update and stop.
+   `$CC_DATA_DIR/statements/`. Copy attached PDFs into `$CC_DATA_DIR/statements/`. If there are no
+   new PDFs at all, tell the user there's nothing to update and stop.
 2. **Record the baseline** for a before/after comparison: the current latest month and total
-   (read `brief.md` if it exists).
-3. **Build.** Run `python3 build_data.py` (requires Python 3.12+; use `python3.12` explicitly
+   (read `$CC_DATA_DIR/monthly_brief.md` if it exists).
+3. **Build.** Run `python3 "$CLAUDE_PLUGIN_ROOT/skills/credit-card-spending-dashboard/build_data.py"`
+   (requires Python 3.12+; use `python3.12` explicitly
    if `python3` is older). This converts each PDF to text (cached), extracts transactions,
    removes duplicates and reversal pairs, categorizes from the description, and regenerates
    `data.js`, the Markdown reports, and the self-contained `dashboard.html`.

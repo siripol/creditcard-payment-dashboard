@@ -10,11 +10,11 @@ Do this — report each of these (skip any that are absent, and say so):
 
 1. **Declared version** — read `version` from `.claude-plugin/plugin.json` (and confirm
    `.claude-plugin/marketplace.json` matches; flag if they differ).
-2. **Dashboard build version** — if `skills/credit-card-spending-dashboard/data.js` exists, read
+2. **Dashboard build version** — if `$CC_DATA_DIR/data.js` exists, read
    `CCDATA.version` (also shown in the dashboard footer). This is the version that produced the
    **current** `data.js` / `dashboard.html`. If it differs from the declared version, the dashboard
    is stale — run `/update-dashboard` to rebuild.
-3. **Last-migrated marker** — if `skills/credit-card-spending-dashboard/.cc_migration.json` exists,
+3. **Last-migrated marker** — if `$CC_DATA_DIR/.cc_migration.json` exists,
    read its `version` (what `/migrate` last stamped).
 4. **Source (optional)** — if this is a git checkout, show `git -C . describe --tags --always` /
    the latest `credit-card-spending-dashboard--v*` tag.
