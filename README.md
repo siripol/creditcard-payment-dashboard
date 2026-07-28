@@ -108,6 +108,42 @@ e.g. `"_default": { "mm": "12" }` — and any newly-detected card with no month 
 automatically on the next build (December anchor). Existing entries are never overwritten; omit
 `_default` to keep the generic behavior (anchor from earliest statement month).
 
+## Fresh install (Claude Desktop)
+
+Starting from nothing on a new machine? Do these once, in order.
+
+**1. Install the prerequisites** (the build runs `python3` + `pdftotext` in a shell):
+
+- **Python 3.12+**
+- **pdftotext** (poppler) — macOS: `brew install poppler` · Debian/Ubuntu: `apt install poppler-utils`
+- **node** (used by the verification step)
+
+**2. Add the marketplace and install the plugin** — type in Claude Desktop:
+
+```
+/plugin marketplace add siripol/credit-card-spending-dashboard
+/plugin install credit-card-spending-dashboard@credit-card-spending-dashboard
+```
+
+Then **restart Claude Desktop** so the plugin loads.
+
+**3. Add your statements and build:**
+
+- Put your statement **PDFs** in `~/.credit-card-dashboard/statements/` (the default data folder;
+  `/update-statement` creates it if missing).
+- Run **`/update-statement`**.
+- Open **`~/.credit-card-dashboard/dashboard.html`**.
+
+You do **not** need to set anything else: the commands default `CC_DATA_DIR` to
+`~/.credit-card-dashboard`, so your statements, config, and dashboard live **outside** the plugin
+and survive every future update. To keep the data somewhere else, set it once:
+`export CC_DATA_DIR="/your/path"`.
+
+> **Note on parsers.** The shipped `parse_card_a` / `parse_card_b` are **generic examples**. If your
+> bank's statement layout differs, transactions may parse incompletely — the parser needs adapting to
+> your bank (detection marker, date format, credit/negative sign, instalment lines). See the
+> "Per-bank adaptation points" in `CLAUDE.md`.
+
 ## Install as a plugin
 
 This repo *is* the plugin (it carries both `.claude-plugin/plugin.json` and a
